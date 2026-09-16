@@ -105,7 +105,7 @@ export function Landing() {
           <MapPin size={14} /> Monastir, Tunisia
         </span>
         <span className="topbar-item">
-          <Mail size={14} /> contact@dentalscreen.tn
+          <Mail size={14} /> contact@spotearly.tn
         </span>
       </div>
 
@@ -113,7 +113,7 @@ export function Landing() {
         <div className="header-inner">
           <div className="brand">
   <img src={logo} alt="DentalScreen logo" className="brand-logo" />
-  <span className="brand-name">DentalScreen</span>
+  <span className="brand-name">SpotEarly</span>
 </div>
           <nav className="header-nav">
             {NAV_LINKS.map((link) => (
@@ -141,7 +141,7 @@ export function Landing() {
               A phone photo becomes a reviewed dental record.
             </p>
             <p className="hero-sub reveal reveal-3">
-              DentalScreen brings AI-assisted screening into Tunisian schools —
+              SpotEarly brings AI-assisted screening into Tunisian schools —
               flagging children who may need a dentist, with every result
               checked by a licensed professional.
             </p>
@@ -240,7 +240,7 @@ export function Landing() {
       </section>
 
       <footer className="footer">
-        <p>DentalScreen — Future Health Connectathon 2026</p>
+        <p>SpotEarly — Future Health Connectathon 2026</p>
       </footer>
     </div>
   );

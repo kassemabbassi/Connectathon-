@@ -87,6 +87,26 @@
   margin-bottom: 26px;
 }
 
+.screening-intro-actions {
+  display: flex;
+  margin-top: -10px;
+  margin-bottom: 22px;
+}
+
+.screening-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--blue);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.screening-dashboard-link:hover {
+  color: var(--blue-dark);
+}
+
 .step-pills {
   display: flex;
   gap: 10px;

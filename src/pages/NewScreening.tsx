@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, Lock, User } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, LayoutDashboard, Lock, User } from "lucide-react";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
 import { CameraModal } from "../components/screening/CameraModal";
 import logo from "../assets/logo.png";
@@ -9,6 +9,8 @@ import firstPhoto from "../assets/first1.jpeg";
 import lastPhoto from "../assets/last1.jpeg";
 import { PatientFile } from "./PatientFile";
 import type { PatientForm, ScreeningPhoto } from "./screeningTypes";
+import { detectCaries } from "../lib/detectionApi";
+import type { CariesDetection } from "../lib/detectionApi";
 import "./NewScreening.css";
 
 const ANGLES = [
@@ -42,6 +44,8 @@ export function NewScreening() {
   const [resultShots, setResultShots] = useState<ShotMap>(EMPTY_RESULTS);
   const [activeCamera, setActiveCamera] = useState<AngleKey | null>(null);
   const [stage, setStage] = useState<ScreeningStage>("form");
+  const [detections, setDetections] = useState<CariesDetection[] | null>(null);
+  const [detectionSource, setDetectionSource] = useState<"live" | "demo" | null>(null);
 
   const ageNumber = Number(form.age);
   const isAgeValid = form.age.trim() !== "" && Number.isFinite(ageNumber) && ageNumber >= 3 && ageNumber <= 18;
@@ -52,9 +56,36 @@ export function NewScreening() {
 
   useEffect(() => {
     if (stage !== "analyzing") return;
-    const timer = window.setTimeout(() => setStage("file"), 5200);
-    return () => window.clearTimeout(timer);
-  }, [stage]);
+
+    let cancelled = false;
+    const minDisplayTime = new Promise((resolve) => window.setTimeout(resolve, 2200));
+
+    async function runAnalysis() {
+      const frontImage = shots.front;
+      if (!frontImage) return;
+
+      try {
+        const result = await detectCaries(frontImage);
+        await minDisplayTime; // keep the "analyzing" screen visible a bit, even if the API is fast
+        if (cancelled) return;
+        setDetections(result.detections);
+        setDetectionSource("live");
+      } catch (error) {
+        console.warn("Live detection unavailable, falling back to demo result:", error);
+        await minDisplayTime;
+        if (cancelled) return;
+        setDetections(null); // PatientFile will fall back to the static resultImage swap
+        setDetectionSource("demo");
+      } finally {
+        if (!cancelled) setStage("file");
+      }
+    }
+
+    runAnalysis();
+    return () => {
+      cancelled = true;
+    };
+  }, [stage, shots.front]);
 
   function updateField(field: keyof PatientForm) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +138,8 @@ export function NewScreening() {
     setAttempted(true);
     if (!canSubmit) return;
 
+    setDetections(null);
+    setDetectionSource(null);
     setStage("analyzing");
   }
 
@@ -115,6 +148,8 @@ export function NewScreening() {
     setShots(EMPTY_SHOTS);
     setResultShots(EMPTY_RESULTS);
     setAttempted(false);
+    setDetections(null);
+    setDetectionSource(null);
     setStage("form");
   }
 
@@ -132,6 +167,8 @@ export function NewScreening() {
       <PatientFile
         patient={form}
         photos={screeningPhotos}
+        detections={detections}
+        detectionSource={detectionSource}
         onBack={() => setStage("form")}
         onStartAnother={handleStartAnother}
       />
@@ -144,8 +181,8 @@ export function NewScreening() {
         <header className="screening-header">
           <div className="screening-header-inner">
             <div className="brand">
-              <img src={logo} alt="DentalScreen logo" className="brand-logo" />
-              <span className="brand-name">DentalScreen</span>
+              <img src={logo} alt="SpotEarly logo" className="brand-logo" />
+              <span className="brand-name">SpotEarly</span>
             </div>
             <span className="analysis-header-status">Screening in progress</span>
           </div>
@@ -175,8 +212,8 @@ export function NewScreening() {
             <ArrowLeft size={16} /> Back to home
           </Link>
           <div className="brand">
-            <img src={logo} alt="DentalScreen logo" className="brand-logo" />
-            <span className="brand-name">DentalScreen</span>
+            <img src={logo} alt="SpotEarly logo" className="brand-logo" />
+            <span className="brand-name">SpotEarly</span>
           </div>
         </div>
       </header>
@@ -189,6 +226,12 @@ export function NewScreening() {
             Fill in the details below, then capture or upload clear photos of the child's
             teeth. A front photo is required — add more angles for a more complete record.
           </p>
+
+          <div className="screening-intro-actions">
+            <Link to="/dashboard" className="screening-dashboard-link">
+              <LayoutDashboard size={16} /> View screening dashboard
+            </Link>
+          </div>
 
           <div className="step-pills">
             <span className="step-pill step-pill-active">
