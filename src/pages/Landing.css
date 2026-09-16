@@ -50,7 +50,18 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  display: block;
+  flex: 0 0 42px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 5px 14px -8px rgba(14, 34, 56, 0.7);
 }
 
 .brand-mark {
@@ -70,6 +81,8 @@
 .brand-name {
   font-family: var(--font-display);
   font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1;
   color: var(--ink);
 }
 
@@ -359,13 +372,11 @@
   left: calc(100% / 6);
   right: calc(100% / 6);
   height: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--line) 0,
-    var(--line) 8px,
-    transparent 8px,
-    transparent 16px
-  );
+  background: repeating-linear-gradient(90deg,
+      var(--line) 0,
+      var(--line) 8px,
+      transparent 8px,
+      transparent 16px);
   z-index: 0;
 }
 
@@ -555,10 +566,21 @@
     animation: reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .reveal-1 { animation-delay: 0.05s; }
-  .reveal-2 { animation-delay: 0.15s; }
-  .reveal-3 { animation-delay: 0.28s; }
-  .reveal-4 { animation-delay: 0.4s; }
+  .reveal-1 {
+    animation-delay: 0.05s;
+  }
+
+  .reveal-2 {
+    animation-delay: 0.15s;
+  }
+
+  .reveal-3 {
+    animation-delay: 0.28s;
+  }
+
+  .reveal-4 {
+    animation-delay: 0.4s;
+  }
 
   @keyframes reveal-up {
     to {
@@ -578,12 +600,15 @@
       top: -2px;
       opacity: 0;
     }
+
     8% {
       opacity: 0.95;
     }
+
     88% {
       opacity: 0.95;
     }
+
     100% {
       top: 100%;
       opacity: 0;
@@ -592,6 +617,7 @@
 }
 
 @media (max-width: 900px) {
+
   .topbar,
   .header-nav {
     display: none;

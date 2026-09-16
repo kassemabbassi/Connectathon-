@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import dentsXray from "../assets/dents.png";
 import "./Landing.css";
+import logo from "../assets/logo.png";
 
 const NAV_LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -111,9 +112,9 @@ export function Landing() {
       <header className={`header ${scrolled ? "header-scrolled" : ""}`}>
         <div className="header-inner">
           <div className="brand">
-            <span className="brand-mark">DS</span>
-            <span className="brand-name">DentalScreen</span>
-          </div>
+  <img src={logo} alt="DentalScreen logo" className="brand-logo" />
+  <span className="brand-name">DentalScreen</span>
+</div>
           <nav className="header-nav">
             {NAV_LINKS.map((link) => (
               <a key={link.href} href={link.href}>
