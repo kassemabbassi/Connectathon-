@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
     CalendarDays,
@@ -9,9 +10,21 @@ import {
     ShieldCheck,
     User,
 } from "lucide-react";
-import type { PatientForm, ScreeningPhoto } from "./screeningTypes";
 import "./NewScreening.css";
 import "./PatientFile.css";
+
+type PatientForm = {
+    fullName: string;
+    age: string;
+    identity: string;
+};
+
+type ScreeningPhoto = {
+    angle: string;
+    label: string;
+    image: string;
+    resultImage?: string;
+};
 
 type PatientFileProps = {
     patient: PatientForm;
@@ -21,16 +34,25 @@ type PatientFileProps = {
 };
 
 export function PatientFile({ patient, photos, onBack, onStartAnother }: PatientFileProps) {
+    const navigate = useNavigate();
     const [notes, setNotes] = useState("");
     const [saved, setSaved] = useState(false);
+    const [savePending, setSavePending] = useState(false);
     const createdAt = new Intl.DateTimeFormat("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
     }).format(new Date());
 
+    useEffect(() => {
+        if (!savePending) return;
+        const timer = window.setTimeout(() => navigate("/dashboard"), 850);
+        return () => window.clearTimeout(timer);
+    }, [navigate, savePending]);
+
     function handleSave() {
         const record = {
+            id: `${patient.identity}-${Date.now()}`,
             patient,
             photos,
             notes,
@@ -38,8 +60,10 @@ export function PatientFile({ patient, photos, onBack, onStartAnother }: Patient
             flaggedAreas: 2,
             savedAt: new Date().toISOString(),
         };
-        window.localStorage.setItem(`dentalscreen-record-${patient.identity}`, JSON.stringify(record));
+        window.localStorage.setItem(`dentalscreen-record-${record.id}`, JSON.stringify(record));
+        window.dispatchEvent(new Event("dentalscreen-records-updated"));
         setSaved(true);
+        setSavePending(true);
     }
 
     return (
@@ -63,7 +87,7 @@ export function PatientFile({ patient, photos, onBack, onStartAnother }: Patient
                         <p className="patient-file-sub">Screening record created {createdAt}</p>
                     </div>
                     <div className="patient-file-actions">
-                        <button type="button" className={`btn ${saved ? "btn-saved" : "btn-primary"}`} onClick={handleSave}>
+                        <button type="button" className={`btn ${saved ? "btn-saved" : "btn-primary"}`} onClick={handleSave} disabled={savePending}>
                             {saved ? <CheckCircle2 size={16} /> : <Save size={16} />}
                             {saved ? "File saved" : "Save patient file"}
                         </button>
@@ -108,8 +132,7 @@ export function PatientFile({ patient, photos, onBack, onStartAnother }: Patient
                             <p>Visible areas of concern were flagged for a licensed dentist. This is not a diagnosis.</p>
                         </div>
                         <div className="finding-list">
-                            <div className="finding-row"><span>Flagged areas</span><strong>2 possible caries</strong></div>
-                           
+
                             <div className="finding-row"><span>Next step</span><strong>Clinical validation</strong></div>
                         </div>
                     </section>

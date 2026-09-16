@@ -10,3 +10,14 @@ export type ScreeningPhoto = {
     image: string;
     resultImage?: string;
 };
+
+export type SavedScreening = {
+    id: string;
+    storageKey?: string;
+    patient: PatientForm;
+    photos: ScreeningPhoto[];
+    notes: string;
+    result: string;
+    flaggedAreas: number;
+    savedAt: string;
+};
