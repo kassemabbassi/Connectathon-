@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, Lock, User } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, Lock, User } from "lucide-react";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
 import { CameraModal } from "../components/screening/CameraModal";
 import logo from "../assets/logo.png";
+import firstPhoto from "../assets/first1.jpeg";
+import lastPhoto from "../assets/last1.jpeg";
+import { PatientFile } from "./PatientFile";
+import type { PatientForm, ScreeningPhoto } from "./screeningTypes";
 import "./NewScreening.css";
 
 const ANGLES = [
@@ -19,21 +23,25 @@ type AngleKey = (typeof ANGLES)[number]["key"];
 type ShotMap = Record<AngleKey, string | null>;
 
 const EMPTY_SHOTS: ShotMap = { front: null, upper: null, lower: null, left: null, right: null };
+const EMPTY_RESULTS: ShotMap = { front: null, upper: null, lower: null, left: null, right: null };
 
-type PatientForm = {
-  fullName: string;
-  age: string;
-  identity: string;
-};
+const RESULT_ASSETS = import.meta.glob("../assets/last*.jpeg", {
+  eager: true,
+  import: "default",
+  query: "?url",
+}) as Record<string, string>;
 
 const EMPTY_FORM: PatientForm = { fullName: "", age: "", identity: "" };
+
+type ScreeningStage = "form" | "analyzing" | "file";
 
 export function NewScreening() {
   const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
   const [attempted, setAttempted] = useState(false);
   const [shots, setShots] = useState<ShotMap>(EMPTY_SHOTS);
+  const [resultShots, setResultShots] = useState<ShotMap>(EMPTY_RESULTS);
   const [activeCamera, setActiveCamera] = useState<AngleKey | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [stage, setStage] = useState<ScreeningStage>("form");
 
   const ageNumber = Number(form.age);
   const isAgeValid = form.age.trim() !== "" && Number.isFinite(ageNumber) && ageNumber >= 3 && ageNumber <= 18;
@@ -42,6 +50,12 @@ export function NewScreening() {
   const capturedCount = ANGLES.filter((angle) => shots[angle.key]).length;
   const canSubmit = formValid && !!shots.front;
 
+  useEffect(() => {
+    if (stage !== "analyzing") return;
+    const timer = window.setTimeout(() => setStage("file"), 5200);
+    return () => window.clearTimeout(timer);
+  }, [stage]);
+
   function updateField(field: keyof PatientForm) {
     return (event: ChangeEvent<HTMLInputElement>) => {
       setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -49,24 +63,43 @@ export function NewScreening() {
   }
 
   function handleUpload(angle: AngleKey, file: File) {
+    const resultImage = findResultImage(file.name);
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setShots((prev) => ({ ...prev, [angle]: reader.result as string }));
+        setResultShots((prev) => ({ ...prev, [angle]: resultImage }));
       }
     };
     reader.readAsDataURL(file);
   }
 
+  function findResultImage(fileName: string) {
+    const match = fileName.match(/^first(\d+)\.jpeg$/i);
+    if (!match) return null;
+    const resultName = `last${match[1]}.jpeg`;
+    const resultEntry = Object.entries(RESULT_ASSETS).find(([assetPath]) =>
+      assetPath.toLowerCase().endsWith(`/assets/${resultName.toLowerCase()}`),
+    );
+    return resultEntry?.[1] ?? null;
+  }
+
   function handleCaptured(dataUrl: string) {
     if (activeCamera) {
       setShots((prev) => ({ ...prev, [activeCamera]: dataUrl }));
+      setResultShots((prev) => ({ ...prev, [activeCamera]: null }));
     }
     setActiveCamera(null);
   }
 
   function handleRemove(angle: AngleKey) {
     setShots((prev) => ({ ...prev, [angle]: null }));
+    setResultShots((prev) => ({ ...prev, [angle]: null }));
+  }
+
+  function handleLoadDemoImages() {
+    setShots((prev) => ({ ...prev, front: firstPhoto }));
+    setResultShots((prev) => ({ ...prev, front: lastPhoto }));
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -74,29 +107,65 @@ export function NewScreening() {
     setAttempted(true);
     if (!canSubmit) return;
 
-    const payload = {
-      patient: form,
-      photos: ANGLES.filter((angle) => shots[angle.key]).map((angle) => ({
-        angle: angle.key,
-        label: angle.label,
-        image: shots[angle.key],
-      })),
-    };
-
-    // The screening endpoint and AI model aren't wired up yet — this is
-    // where the payload above will be sent for object detection.
-    console.log("New screening payload", payload);
-    setSubmitted(true);
+    setStage("analyzing");
   }
 
   function handleStartAnother() {
     setForm(EMPTY_FORM);
     setShots(EMPTY_SHOTS);
+    setResultShots(EMPTY_RESULTS);
     setAttempted(false);
-    setSubmitted(false);
+    setStage("form");
   }
 
+  const screeningPhotos: ScreeningPhoto[] = ANGLES.filter((angle) => shots[angle.key]).map((angle) => ({
+    angle: angle.key,
+    label: angle.label,
+    image: shots[angle.key] as string,
+    resultImage: resultShots[angle.key] ?? undefined,
+  }));
+
   const activeAngle = ANGLES.find((angle) => angle.key === activeCamera);
+
+  if (stage === "file") {
+    return (
+      <PatientFile
+        patient={form}
+        photos={screeningPhotos}
+        onBack={() => setStage("form")}
+        onStartAnother={handleStartAnother}
+      />
+    );
+  }
+
+  if (stage === "analyzing") {
+    return (
+      <div className="screening-page analysis-page">
+        <header className="screening-header">
+          <div className="screening-header-inner">
+            <div className="brand">
+              <img src={logo} alt="DentalScreen logo" className="brand-logo" />
+              <span className="brand-name">DentalScreen</span>
+            </div>
+            <span className="analysis-header-status">Screening in progress</span>
+          </div>
+        </header>
+        <main className="analysis-main" aria-live="polite">
+          <div className="analysis-orbit"><span /></div>
+          <p className="screening-eyebrow">AI-assisted review</p>
+          <h1>Analyzing {form.fullName}&apos;s screening</h1>
+          <p className="analysis-sub">Our prototype is checking the captured images for visible areas that may need clinical review.</p>
+          <div className="analysis-steps">
+            <span className="analysis-step is-done"><CheckCircle2 size={17} /> Images received</span>
+            <span className="analysis-step is-active"><span className="analysis-spinner" /> Detecting possible caries</span>
+            <span className="analysis-step"><FileImage size={17} /> Preparing patient file</span>
+          </div>
+          <div className="analysis-progress"><span /></div>
+          <p className="analysis-disclaimer">This demo simulates the AI processing step.</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="screening-page">
@@ -195,6 +264,9 @@ export function NewScreening() {
                 Capture at least the front bite. More angles help the AI model give a more
                 complete read.
               </p>
+              <button type="button" className="demo-images-btn" onClick={handleLoadDemoImages} disabled={!formValid}>
+                <FileImage size={15} /> Load demo images
+              </button>
             </div>
 
             {!formValid && (
@@ -220,29 +292,14 @@ export function NewScreening() {
             </div>
           </section>
 
-          {submitted ? (
-            <div className="screening-success">
-              <CheckCircle2 size={22} />
-              <div>
-                <p className="screening-success-title">Screening saved locally</p>
-                <p className="screening-success-sub">
-                  This record will be sent for AI analysis once that step is connected.
-                </p>
-              </div>
-              <button type="button" className="btn btn-ghost-navy" onClick={handleStartAnother}>
-                Start another
-              </button>
-            </div>
-          ) : (
-            <div className="screening-actionbar">
-              <p className="screening-progress-text">
-                {capturedCount} of {ANGLES.length} angles captured
-              </p>
-              <button type="submit" className="btn btn-primary">
-                Start screening
-              </button>
-            </div>
-          )}
+          <div className="screening-actionbar">
+            <p className="screening-progress-text">
+              {capturedCount} of {ANGLES.length} angles captured
+            </p>
+            <button type="submit" className="btn btn-primary">
+              Start screening
+            </button>
+          </div>
         </form>
       </main>
 
