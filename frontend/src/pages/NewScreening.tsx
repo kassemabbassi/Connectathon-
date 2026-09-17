@@ -49,7 +49,7 @@ export function NewScreening() {
   const [detectionSource, setDetectionSource] = useState<"live" | "demo" | null>(null);
 
   const ageNumber = Number(form.age);
-  const isAgeValid = form.age.trim() !== "" && Number.isFinite(ageNumber) && ageNumber >= 3 && ageNumber <= 18;
+  const isAgeValid = form.age.trim() !== "" && Number.isFinite(ageNumber);
   const formValid = form.fullName.trim().length > 1 && isAgeValid && form.identity.trim().length > 0;
 
   const capturedCount = ANGLES.filter((angle) => shots[angle.key]).length;
@@ -283,13 +283,11 @@ export function NewScreening() {
                   type="number"
                   className="field-input"
                   placeholder="e.g. 9"
-                  min={3}
-                  max={18}
                   value={form.age}
                   onChange={updateField("age")}
                 />
                 {attempted && !isAgeValid && (
-                  <span className="field-error">Enter an age between 3 and 18.</span>
+                  <span className="field-error">Enter a valid age.</span>
                 )}
               </label>
 
