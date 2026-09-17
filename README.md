@@ -42,6 +42,16 @@ The model is executed by the backend. The frontend sends each selected image ind
 
 ## 3. System Architecture
 
+![SpotEarly system architecture](sys.png)
+
+The system is organized into three cooperating layers:
+
+1. **Frontend:** A React and TypeScript interface guides image capture, upload, patient review, and result visualization.
+2. **Backend:** A FastAPI service validates incoming images, exposes the REST API, and coordinates model inference.
+3. **AI/ML:** The fine-tuned Ultralytics YOLO model in `backend/model/best.pt` detects possible caries regions and returns normalized bounding boxes with confidence scores.
+
+The request flows from the frontend to the backend as a multipart image upload. After inference, the backend returns structured JSON. The frontend then draws each detection on the correct image and preserves the result for the patient file.
+
 ```text
 User
   |
@@ -57,8 +67,6 @@ backend/model/best.pt
   v
 Normalized detection response
 ```
-
-
 
 ## 4. Important Files
 
@@ -183,6 +191,67 @@ http://localhost:8000
 7. Add clinical notes if needed.
 8. Save the patient file.
 9. Review the saved record from the dashboard.
+
+## 9. AI Request and Response
+
+### Request flow
+
+Each uploaded image is analyzed independently. The frontend converts the captured image into a file, sends it to the backend using `multipart/form-data`, and uses the response to render detections for that specific dental view.
+
+Endpoint:
+
+```http
+POST http://localhost:8000/detect
+Content-Type: multipart/form-data
+```
+
+The multipart field is named `file`.
+
+
+
+### Response
+
+The backend runs the YOLO model and returns the image dimensions plus one entry for every detected caries region:
+
+```json
+{
+  "detections": [
+    {
+      "label": "caries",
+      "confidence": 0.873,
+      "x": 0.241,
+      "y": 0.318,
+      "width": 0.126,
+      "height": 0.142
+    }
+  ],
+  "image_width": 1280,
+  "image_height": 960
+}
+```
+
+Response fields:
+
+| Field                         | Description                                |
+| ----------------------------- | ------------------------------------------ |
+| `detections`                  | List of detected regions                   |
+| `label`                       | Model class name, currently `caries`       |
+| `confidence`                  | Model confidence score between `0` and `1` |
+| `x`, `y`                      | Normalized top-left coordinate of the box  |
+| `width`, `height`             | Normalized dimensions of the box           |
+| `image_width`, `image_height` | Original image dimensions in pixels        |
+
+When no caries region is detected, the API returns an empty list:
+
+```json
+{
+  "detections": [],
+  "image_width": 1280,
+  "image_height": 960
+}
+```
+
+The frontend uses the normalized coordinates to draw the box on the corresponding uploaded image. Each dental angle is processed separately, so the result for an upper-arch image is never mixed with the result for a lateral image.
 
 
 
