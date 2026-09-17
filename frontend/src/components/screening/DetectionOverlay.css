@@ -2,18 +2,34 @@
   position: relative;
   width: 100%;
   height: 100%;
-  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
 }
 
-.detection-overlay img {
+.detection-canvas {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: visible;
+}
+
+.detection-canvas img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
   display: block;
+  object-fit: fill;
+}
+
+.detection-box-wrap {
+  position: absolute;
 }
 
 .detection-box {
   position: absolute;
+  inset: 0;
   border: 2px solid var(--urgent);
   border-radius: 3px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
@@ -21,4 +37,58 @@
 
 .detection-box-cavity {
   border-color: var(--watch);
+}
+
+.detection-box-color-0 {
+  --detection-color: #e5484d;
+}
+
+.detection-box-color-1 {
+  --detection-color: #d97706;
+}
+
+.detection-box-color-2 {
+  --detection-color: #0891b2;
+}
+
+.detection-box-color-3 {
+  --detection-color: #7c3aed;
+}
+
+.detection-box-color-4 {
+  --detection-color: #059669;
+}
+
+.detection-box-color-5 {
+  --detection-color: #db2777;
+}
+
+.detection-box[class*="detection-box-color-"] {
+  border-color: var(--detection-color);
+}
+
+.detection-overlay .detection-confidence {
+  position: absolute;
+  left: calc(100% + 5px);
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: block;
+  margin: 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--detection-color, var(--urgent));
+  color: white;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.detection-overlay .detection-box-wrap-left .detection-confidence {
+  left: auto;
+  right: calc(100% + 5px);
 }

@@ -27,6 +27,7 @@ type ScreeningPhoto = {
     label: string;
     image: string;
     resultImage?: string;
+    detections?: CariesDetection[];
 };
 
 type PatientFileProps = {
@@ -56,8 +57,8 @@ export function PatientFile({
         year: "numeric",
     }).format(new Date());
 
-    const isLive = detectionSource === "live" && detections !== null;
-    const findings = isLive ? detections! : [];
+    const isLive = detectionSource === "live" || photos.some((photo) => photo.detections !== undefined);
+    const findings = isLive ? photos.flatMap((photo) => photo.detections ?? []) : [];
 
     const priority: "clear" | "watch" | "urgent" = !isLive
         ? "watch"
@@ -155,43 +156,63 @@ export function PatientFile({
                             <PriorityBadge priority={priority} />
                         </div>
 
-                        {photos[0] && (
-                            <div className="result-photo">
-                                {isLive ? (
-                                    <DetectionOverlay
-                                        imageSrc={photos[0].image}
-                                        detections={findings}
-                                        alt={`${photos[0].label} AI result`}
-                                    />
-                                ) : (
-                                    <img src={photos[0].resultImage ?? photos[0].image} alt={`${photos[0].label} AI result`} />
-                                )}
-                                <span>
-                                    <ImageIcon size={14} />
-                                    {isLive ? "Live model result" : photos[0].resultImage ? "AI result image (demo)" : "Primary image analyzed"}
-                                </span>
-                            </div>
-                        )}
+                        <div className="screening-results-list">
+                            {photos.map((photo) => {
+                                const photoFindings = photo.detections ?? [];
+                                const photoIsLive = photo.detections !== undefined;
+
+                                return (
+                                    <article className="screening-result-item" key={photo.angle}>
+                                        <div className="screening-result-item-head">
+                                            <div>
+                                                <p className="patient-file-kicker">Analyzed image</p>
+                                                <h3>{photo.label}</h3>
+                                            </div>
+                                            <span className="screening-result-state">
+                                                {photoIsLive ? "AI complete" : "Review image"}
+                                            </span>
+                                        </div>
+                                        <div className="result-photo">
+                                            {photoIsLive ? (
+                                                <DetectionOverlay
+                                                    imageSrc={photo.image}
+                                                    detections={photoFindings}
+                                                    alt={`${photo.label} AI result`}
+                                                />
+                                            ) : (
+                                                <img src={photo.resultImage ?? photo.image} alt={`${photo.label} AI result`} />
+                                            )}
+                                            <span>
+                                                <ImageIcon size={14} />
+                                                {photoIsLive ? "Live model result" : "Image requires review"}
+                                            </span>
+                                        </div>
+                                        <div className="finding-list">
+                                            {photoIsLive && photoFindings.length > 0 ? (
+                                                photoFindings.map((finding, index) => (
+                                                    <div className="finding-row" key={`${photo.angle}-${index}`}>
+                                                        <span>{finding.label === "caries" ? "Caries" : "Cavity"}</span>
+                                                        <strong>{Math.round(finding.confidence * 100)}% confidence</strong>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="finding-row">
+                                                    <span>Model result</span>
+                                                    <strong>{photoIsLive ? "No decay detected" : "Analysis unavailable"}</strong>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </div>
 
                         <div className="result-notice">
                             <CheckCircle2 size={20} />
                             <p>Visible areas of concern were flagged for a licensed dentist. This is not a diagnosis.</p>
                         </div>
 
-                        <div className="finding-list">
-                            {isLive && findings.length > 0 &&
-                                findings.map((finding, index) => (
-                                    <div className="finding-row" key={index}>
-                                        <span>{finding.label === "caries" ? "Caries" : "Cavity"}</span>
-                                        <strong>{Math.round(finding.confidence * 100)}% confidence</strong>
-                                    </div>
-                                ))}
-                            {isLive && findings.length === 0 && (
-                                <div className="finding-row">
-                                    <span>Model result</span>
-                                    <strong>No decay detected</strong>
-                                </div>
-                            )}
+                        <div className="finding-list finding-next-step">
                             <div className="finding-row"><span>Next step</span><strong>Clinical validation</strong></div>
                         </div>
                     </section>
@@ -225,8 +246,14 @@ export function PatientFile({
                     <div className="evidence-grid">
                         {photos.map((photo) => (
                             <figure className="evidence-photo" key={photo.angle}>
-                                <div className="evidence-image-wrap"><img src={photo.image} alt={photo.label} /></div>
-                                <figcaption><strong>{photo.label}</strong><span>{photo.resultImage ? "Input + AI result" : photo.angle === "front" ? "Primary view" : "Additional view"}</span></figcaption>
+                                <div className="evidence-image-wrap">
+                                    {photo.detections !== undefined ? (
+                                        <DetectionOverlay imageSrc={photo.image} detections={photo.detections} alt={photo.label} />
+                                    ) : (
+                                        <img src={photo.image} alt={photo.label} />
+                                    )}
+                                </div>
+                                <figcaption><strong>{photo.label}</strong><span>{photo.detections !== undefined ? "Live model result" : photo.resultImage ? "Input + AI result" : photo.angle === "front" ? "Primary view" : "Additional view"}</span></figcaption>
                             </figure>
                         ))}
                     </div>

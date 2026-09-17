@@ -191,10 +191,12 @@
     display: block;
     object-fit: contain;
 }
+
 .result-photo .detection-overlay {
     width: 100%;
     height: 100%;
 }
+
 .result-photo span {
     position: absolute;
     left: 10px;
@@ -209,6 +211,54 @@
     color: white;
     font-size: 0.72rem;
     font-weight: 700;
+}
+
+.screening-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.screening-result-item {
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.56);
+}
+
+.screening-result-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.screening-result-item-head h3 {
+    margin-top: 3px;
+    font-size: 1rem;
+}
+
+.screening-result-state {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: var(--clear-bg);
+    color: var(--clear);
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.screening-result-item .result-photo {
+    margin: 0;
+}
+
+.screening-result-item .finding-list {
+    margin-top: 10px;
+}
+
+.finding-next-step {
+    margin-top: 8px;
 }
 
 .result-notice {

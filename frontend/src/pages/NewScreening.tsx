@@ -14,7 +14,7 @@ import type { CariesDetection } from "../lib/detectionApi";
 import "./NewScreening.css";
 
 const ANGLES = [
-  { key: "front", label: "Front bite", hint: "Teeth together, straight-on", required: true },
+  { key: "front", label: "Front bite", hint: "Teeth together, straight-on", required: false },
   { key: "upper", label: "Upper arch", hint: "Chin up, upper teeth only", required: false },
   { key: "lower", label: "Lower arch", hint: "Chin down, lower teeth only", required: false },
   { key: "left", label: "Left side", hint: "Left profile, biting down", required: false },
@@ -45,6 +45,7 @@ export function NewScreening() {
   const [activeCamera, setActiveCamera] = useState<AngleKey | null>(null);
   const [stage, setStage] = useState<ScreeningStage>("form");
   const [detections, setDetections] = useState<CariesDetection[] | null>(null);
+  const [detectionsByAngle, setDetectionsByAngle] = useState<Partial<Record<AngleKey, CariesDetection[]>>>({});
   const [detectionSource, setDetectionSource] = useState<"live" | "demo" | null>(null);
 
   const ageNumber = Number(form.age);
@@ -52,7 +53,7 @@ export function NewScreening() {
   const formValid = form.fullName.trim().length > 1 && isAgeValid && form.identity.trim().length > 0;
 
   const capturedCount = ANGLES.filter((angle) => shots[angle.key]).length;
-  const canSubmit = formValid && !!shots.front;
+  const canSubmit = formValid && capturedCount > 0;
 
   useEffect(() => {
     if (stage !== "analyzing") return;
@@ -61,31 +62,38 @@ export function NewScreening() {
     const minDisplayTime = new Promise((resolve) => window.setTimeout(resolve, 2200));
 
     async function runAnalysis() {
-      const frontImage = shots.front;
-      if (!frontImage) return;
+      const selectedAngles = ANGLES.filter((angle) => shots[angle.key]);
+      const results = await Promise.allSettled(
+        selectedAngles.map(async (angle) => ({
+          angle: angle.key,
+          result: await detectCaries(shots[angle.key] as string),
+        })),
+      );
 
-      try {
-        const result = await detectCaries(frontImage);
-        await minDisplayTime; // keep the "analyzing" screen visible a bit, even if the API is fast
-        if (cancelled) return;
-        setDetections(result.detections);
-        setDetectionSource("live");
-      } catch (error) {
-        console.warn("Live detection unavailable, falling back to demo result:", error);
-        await minDisplayTime;
-        if (cancelled) return;
-        setDetections(null); // PatientFile will fall back to the static resultImage swap
-        setDetectionSource("demo");
-      } finally {
-        if (!cancelled) setStage("file");
+      await minDisplayTime;
+      if (cancelled) return;
+
+      const nextDetections: Partial<Record<AngleKey, CariesDetection[]>> = {};
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          nextDetections[result.value.angle] = result.value.result.detections;
+        } else {
+          console.warn("Live detection failed for one screening photo:", result.reason);
+        }
       }
+
+      const frontDetections = nextDetections.front;
+      setDetectionsByAngle(nextDetections);
+      setDetections(frontDetections ?? null);
+      setDetectionSource(frontDetections !== undefined ? "live" : "demo");
+      setStage("file");
     }
 
     runAnalysis();
     return () => {
       cancelled = true;
     };
-  }, [stage, shots.front]);
+  }, [stage, shots]);
 
   function updateField(field: keyof PatientForm) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -139,6 +147,7 @@ export function NewScreening() {
     if (!canSubmit) return;
 
     setDetections(null);
+    setDetectionsByAngle({});
     setDetectionSource(null);
     setStage("analyzing");
   }
@@ -149,18 +158,17 @@ export function NewScreening() {
     setResultShots(EMPTY_RESULTS);
     setAttempted(false);
     setDetections(null);
+    setDetectionsByAngle({});
     setDetectionSource(null);
     setStage("form");
   }
 
-    const screeningPhotos: ScreeningPhoto[] = ANGLES.filter((angle) => shots[angle.key]).map((angle) => ({
+  const screeningPhotos: ScreeningPhoto[] = ANGLES.filter((angle) => shots[angle.key]).map((angle) => ({
     angle: angle.key,
     label: angle.label,
     image: shots[angle.key] as string,
     resultImage: resultShots[angle.key] ?? undefined,
-    // Only the front photo is actually sent to the model today — attach its
-    // real detections so they survive into the saved patient record.
-    detections: angle.key === "front" && detectionSource === "live" ? (detections ?? []) : undefined,
+    detections: detectionsByAngle[angle.key],
   }));
 
   const activeAngle = ANGLES.find((angle) => angle.key === activeCamera);
@@ -226,8 +234,8 @@ export function NewScreening() {
           <p className="screening-eyebrow">New screening</p>
           <h1>Add a child's details and teeth photos</h1>
           <p className="screening-sub">
-            Fill in the details below, then capture or upload clear photos of the child's
-            teeth. A front photo is required — add more angles for a more complete record.
+            Fill in the details below, then capture or upload one or more clear photos of the
+            child's teeth. Add any angles you have available for a more complete record.
           </p>
 
           <div className="screening-intro-actions">

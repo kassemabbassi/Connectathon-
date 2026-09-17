@@ -14,7 +14,7 @@ export type DetectionResponse = {
   image_height: number;
 };
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 /**
  * Converts a data URL (e.g. from FileReader or the camera capture)
@@ -51,5 +51,10 @@ export async function detectCaries(imageDataUrl: string): Promise<DetectionRespo
     throw new Error(`Detection API returned ${response.status}`);
   }
 
-  return response.json();
+  const result = (await response.json()) as DetectionResponse;
+  if (!Array.isArray(result.detections)) {
+    throw new Error("Detection API returned an invalid response.");
+  }
+
+  return result;
 }
