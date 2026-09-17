@@ -107,15 +107,17 @@ Normalized detection response
 - A trained model at `backend/model/best.pt`
 
 ## 6. Installation
-
+```bash
+git clone https://github.com/kassemabbassi/Connectathon-
+```
 ### Backend installation on Windows
 
 From the repository root:
 
 ```powershell
 cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+python -m venv venv
+.\venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -146,9 +148,7 @@ npm install
 ## 7. Running the Application
 
 Run the backend in one terminal:
-```bash
-git clone https://github.com/kassemabbassi/Connectathon-
-```
+
 ```bash
 cd backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
