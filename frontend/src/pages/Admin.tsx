@@ -43,7 +43,10 @@ export function Admin() {
     ]);
     setInstitutions(nextInstitutions);
     setUsers(nextUsers);
-    setInstitutionId((current) => current || nextInstitutions[0]?.id || "");
+    setInstitutionId((current) => {
+      if (current && nextInstitutions.some((item) => item.id === current)) return current;
+      return nextInstitutions[0]?.id || "";
+    });
   }
 
   useEffect(() => {
@@ -72,9 +75,16 @@ export function Admin() {
     setInstitutionMessage(null);
     setSavingInstitution(true);
     try {
-      await createInstitution(token, institutionName.trim());
+      const created = await createInstitution(token, institutionName.trim());
       setInstitutionName("");
-      setInstitutionMessage("Institution added. You can now create staff and dentist accounts for it.");
+      setInstitutions((current) => {
+        if (current.some((item) => item.id === created.id)) return current;
+        return [...current, created].sort((a, b) => a.name.localeCompare(b.name));
+      });
+      setInstitutionId(created.id);
+      setInstitutionMessage(
+        `${created.name} was added. Previous institutions are kept — you can work with several schools.`,
+      );
       await reload(token);
     } catch (caught) {
       setInstitutionError(caught instanceof AuthApiError ? caught.message : "Unable to add this institution.");
@@ -132,8 +142,8 @@ export function Admin() {
           <p className="screening-eyebrow">Platform administration</p>
           <h1>Institutions and accounts</h1>
           <p>
-            Only administrators can add schools and create staff or dentist logins. Those users then sign in
-            with the credentials you provide. There is no public registration.
+            Only administrators can add schools and create staff or dentist logins. You can add as many
+            institutions as you need — each new school is added to the list, the previous ones stay.
           </p>
         </div>
 
@@ -146,6 +156,7 @@ export function Admin() {
               <div>
                 <p className="dashboard-kicker">Schools</p>
                 <h2>Add an institution</h2>
+                <p className="admin-card-note">{institutions.length} saved — new ones are added, never replaced.</p>
               </div>
             </div>
             <form className="auth-form admin-form" onSubmit={handleCreateInstitution}>

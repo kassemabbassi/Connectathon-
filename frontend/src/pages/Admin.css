@@ -78,6 +78,13 @@
   font-size: 1.15rem;
 }
 
+.admin-card-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
 .admin-form {
   max-width: none;
 }
