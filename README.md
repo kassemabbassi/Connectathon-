@@ -173,6 +173,21 @@ The backend API will normally be available at:
 http://localhost:8000
 ```
 
+### Session security
+
+Authentication uses an HttpOnly session cookie; the browser never stores the JWT in localStorage or exposes it to JavaScript. State-changing API requests also require a CSRF token.
+
+For production, serve both applications over HTTPS and set these backend environment variables:
+
+```text
+COOKIE_SECURE=true
+COOKIE_SAMESITE=lax
+CORS_ORIGINS=https://your-app.example
+JWT_SECRET=<a-long-random-secret>
+```
+
+`COOKIE_SECURE=false` is only appropriate for local HTTP development.
+
 
 
 

@@ -18,8 +18,6 @@ export type AuthUser = {
 };
 
 export type LoginResponse = {
-  access_token: string;
-  token_type: "bearer";
   user: AuthUser;
 };
 
@@ -48,18 +46,23 @@ async function parseError(response: Response): Promise<string> {
   return "An unexpected error occurred. Please try again.";
 }
 
-async function request<T>(path: string, init?: RequestInit, token?: string | null): Promise<T> {
+function csrfToken() {
+  return document.cookie.split("; ").find((item) => item.startsWith("dentalscreen_csrf="))?.split("=")[1] ?? "";
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+  if (init?.method && !["GET", "HEAD"].includes(init.method)) {
+    headers.set("X-CSRF-Token", csrfToken());
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -69,8 +72,8 @@ async function request<T>(path: string, init?: RequestInit, token?: string | nul
   return (await response.json()) as T;
 }
 
-export async function fetchInstitutions(token: string): Promise<Institution[]> {
-  return request<Institution[]>("/institutions", undefined, token);
+export async function fetchInstitutions(): Promise<Institution[]> {
+  return request<Institution[]>("/institutions");
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -88,34 +91,36 @@ export type CreateUserPayload = {
   institution_id: string;
 };
 
-export async function createInstitution(token: string, name: string): Promise<Institution> {
+export async function createInstitution(name: string): Promise<Institution> {
   return request<Institution>(
     "/admin/institutions",
     {
       method: "POST",
       body: JSON.stringify({ name }),
     },
-    token,
   );
 }
 
-export async function fetchAdminUsers(token: string): Promise<AuthUser[]> {
-  return request<AuthUser[]>("/admin/users", undefined, token);
+export async function fetchAdminUsers(): Promise<AuthUser[]> {
+  return request<AuthUser[]>("/admin/users");
 }
 
-export async function createUserAccount(token: string, payload: CreateUserPayload): Promise<{ message: string; user: AuthUser }> {
+export async function createUserAccount(payload: CreateUserPayload): Promise<{ message: string; user: AuthUser }> {
   return request<{ message: string; user: AuthUser }>(
     "/admin/users",
     {
       method: "POST",
       body: JSON.stringify(payload),
     },
-    token,
   );
 }
 
-export async function fetchCurrentUser(token: string): Promise<AuthUser> {
-  return request<AuthUser>("/auth/me", undefined, token);
+export async function fetchCurrentUser(): Promise<AuthUser> {
+  return request<AuthUser>("/auth/me");
+}
+
+export async function logout(): Promise<void> {
+  await request<{ ok: boolean }>("/auth/logout", { method: "POST" });
 }
 
 export { AuthApiError };

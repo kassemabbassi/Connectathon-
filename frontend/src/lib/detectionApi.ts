@@ -53,16 +53,15 @@ export async function imageSourceToFile(image: string, fileName = "capture.jpg")
  * Throws if the backend is unreachable or returns an error — callers
  * should catch this and fall back to the offline demo path.
  */
-export async function detectCaries(imageDataUrl: string, token: string): Promise<DetectionResponse> {
+export async function detectCaries(imageDataUrl: string): Promise<DetectionResponse> {
   const file = await imageSourceToFile(imageDataUrl);
   const formData = new FormData();
   formData.append("file", file);
 
   const response = await fetch(`${API_BASE_URL}/detect`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "X-CSRF-Token": document.cookie.split("; ").find((item) => item.startsWith("dentalscreen_csrf="))?.split("=")[1] ?? "" },
+    credentials: "include",
     body: formData,
   });
 

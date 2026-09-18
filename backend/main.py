@@ -1,9 +1,10 @@
 from datetime import datetime, timezone, timedelta
 from json import JSONDecodeError, loads
 from pathlib import Path
+import secrets
 
 from bson import ObjectId
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ultralytics import YOLO
@@ -25,6 +26,7 @@ from auth import (
     require_roles,
 )
 from database import ensure_indexes, institutions_collection, patient_files_collection, users_collection
+from config import settings
 from storage import (
     ALLOWED_ANGLES,
     ANGLE_LABELS,
@@ -38,9 +40,10 @@ app = FastAPI(title="Caries Detection API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=settings.allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 MODEL_PATH = Path(__file__).resolve().parent / "model" / "best.pt"
@@ -163,7 +166,7 @@ def create_user_account(
 
 
 @app.post("/auth/login")
-def login(payload: LoginRequest):
+def login(payload: LoginRequest, response: Response):
     email = normalize_email(str(payload.email))
     user = users_collection.find_one({"email": email})
     if not user or not password_hash.verify(payload.password, user["password_hash"]):
@@ -171,7 +174,33 @@ def login(payload: LoginRequest):
     if user.get("status") != "active":
         raise HTTPException(status_code=403, detail="This account is not active yet.")
 
-    return {"access_token": create_access_token(user), "token_type": "bearer", "user": public_user(user)}
+    max_age = settings.access_token_minutes * 60
+    response.set_cookie(
+        key=settings.session_cookie_name,
+        value=create_access_token(user),
+        max_age=max_age,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        path="/",
+    )
+    response.set_cookie(
+        key=settings.csrf_cookie_name,
+        value=secrets.token_urlsafe(32),
+        max_age=max_age,
+        httponly=False,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        path="/",
+    )
+    return {"user": public_user(user)}
+
+
+@app.post("/auth/logout")
+def logout(response: Response):
+    response.delete_cookie(settings.session_cookie_name, path="/", secure=settings.cookie_secure, samesite=settings.cookie_samesite)
+    response.delete_cookie(settings.csrf_cookie_name, path="/", secure=settings.cookie_secure, samesite=settings.cookie_samesite)
+    return {"ok": True}
 
 
 @app.get("/auth/me")

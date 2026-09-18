@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Building2, UserPlus } from "lucide-react";
 import logo from "../assets/logo.png";
 import { UserMenu } from "../components/auth/UserMenu";
-import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import {
   AuthApiError,
   createInstitution,
@@ -17,7 +17,7 @@ import "./Auth.css";
 import "./Admin.css";
 
 export function Admin() {
-  const { token } = useAuth();
+  const { t } = useLanguage();
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,10 +36,10 @@ export function Admin() {
   const [userError, setUserError] = useState<string | null>(null);
   const [savingUser, setSavingUser] = useState(false);
 
-  async function reload(authToken: string) {
+  async function reload() {
     const [nextInstitutions, nextUsers] = await Promise.all([
-      fetchInstitutions(authToken),
-      fetchAdminUsers(authToken),
+      fetchInstitutions(),
+      fetchAdminUsers(),
     ]);
     setInstitutions(nextInstitutions);
     setUsers(nextUsers);
@@ -50,16 +50,14 @@ export function Admin() {
   }
 
   useEffect(() => {
-    if (!token) return;
-    const authToken = token;
     let cancelled = false;
 
     async function load() {
       try {
-        await reload(authToken);
+        await reload();
         if (!cancelled) setLoadError(null);
       } catch {
-        if (!cancelled) setLoadError("Unable to load institutions and accounts.");
+        if (!cancelled) setLoadError(t("Unable to load institutions and accounts."));
       }
     }
 
@@ -67,16 +65,15 @@ export function Admin() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, []);
 
   async function handleCreateInstitution(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token) return;
     setInstitutionError(null);
     setInstitutionMessage(null);
     setSavingInstitution(true);
     try {
-      const created = await createInstitution(token, institutionName.trim());
+      const created = await createInstitution(institutionName.trim());
       setInstitutionName("");
       setInstitutions((current) => {
         if (current.some((item) => item.id === created.id)) return current;
@@ -86,9 +83,10 @@ export function Admin() {
       setInstitutionMessage(
         `${created.name} was added. Previous institutions are kept — you can work with several schools.`,
       );
-      await reload(token);
+      await reload();
+      setInstitutionMessage(t("Institution added. Previous institutions are kept, so you can work with several schools."));
     } catch (caught) {
-      setInstitutionError(caught instanceof AuthApiError ? caught.message : "Unable to add this institution.");
+      setInstitutionError(caught instanceof AuthApiError ? caught.message : t("Unable to add this institution."));
     } finally {
       setSavingInstitution(false);
     }
@@ -96,18 +94,17 @@ export function Admin() {
 
   async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token) return;
     setUserError(null);
     setUserMessage(null);
 
     if (!institutionId) {
-      setUserError("Add an institution first, then create the account.");
+      setUserError(t("Add an institution first, then create the account."));
       return;
     }
 
     setSavingUser(true);
     try {
-      const response = await createUserAccount(token, {
+      const response = await createUserAccount({
         full_name: fullName.trim(),
         email: email.trim(),
         password,
@@ -118,9 +115,10 @@ export function Admin() {
       setEmail("");
       setPassword("");
       setUserMessage(`${response.user.full_name} can now sign in as ${response.user.role}.`);
-      await reload(token);
+      await reload();
+      setUserMessage(t("Account created. The user can now sign in."));
     } catch (caught) {
-      setUserError(caught instanceof AuthApiError ? caught.message : "Unable to create this account.");
+      setUserError(caught instanceof AuthApiError ? caught.message : t("Unable to create this account."));
     } finally {
       setSavingUser(false);
     }
@@ -132,7 +130,7 @@ export function Admin() {
         <div className="admin-header-inner">
           <Link to="/" className="admin-brand">
             <img src={logo} alt="SpotEarly logo" />
-            <span>SpotEarly Admin</span>
+            <span>{t("SpotEarly Admin")}</span>
           </Link>
           <UserMenu />
         </div>
@@ -140,12 +138,9 @@ export function Admin() {
 
       <main className="admin-main">
         <div className="admin-heading">
-          <p className="screening-eyebrow">Platform administration</p>
-          <h1>Institutions and accounts</h1>
-          <p>
-            Only administrators can add schools and create staff or dentist logins. You can add as many
-            institutions as you need — each new school is added to the list, the previous ones stay.
-          </p>
+          <p className="screening-eyebrow">{t("Platform administration")}</p>
+          <h1>{t("Institutions and accounts")}</h1>
+          <p>{t("Only administrators can add schools and create staff or dentist logins. You can add as many institutions as you need; each new school is added to the list and previous ones stay.")}</p>
         </div>
 
         {loadError && <p className="auth-error">{loadError}</p>}
@@ -155,37 +150,37 @@ export function Admin() {
             <div className="admin-card-head">
               <Building2 size={20} />
               <div>
-                <p className="dashboard-kicker">Schools</p>
-                <h2>Add an institution</h2>
-                <p className="admin-card-note">{institutions.length} saved — new ones are added, never replaced.</p>
+                <p className="dashboard-kicker">{t("Schools")}</p>
+                <h2>{t("Add an institution")}</h2>
+                <p className="admin-card-note">{t("Saved institutions")}: {institutions.length}. {t("New ones are added, never replaced.")}</p>
               </div>
             </div>
             <form className="auth-form admin-form" onSubmit={handleCreateInstitution}>
               {institutionError && <p className="auth-error">{institutionError}</p>}
               {institutionMessage && <p className="auth-success">{institutionMessage}</p>}
               <label className="auth-field">
-                <span>Institution name</span>
+                <span>{t("Institution name")}</span>
                 <input
                   type="text"
                   required
                   minLength={2}
                   value={institutionName}
                   onChange={(event) => setInstitutionName(event.target.value)}
-                  placeholder="e.g. École Pilote Monastir"
+                  placeholder={t("e.g. École Pilote Monastir")}
                 />
               </label>
               <button type="submit" className="btn btn-primary" disabled={savingInstitution}>
-                {savingInstitution ? "Adding…" : "Add institution"}
+                {savingInstitution ? t("Adding…") : t("Add institution")}
               </button>
             </form>
             <ul className="admin-list">
               {institutions.length === 0 ? (
-                <li className="admin-empty">No institution yet. Add one before creating accounts.</li>
+                <li className="admin-empty">{t("No institution yet. Add one before creating accounts.")}</li>
               ) : (
                 institutions.map((institution) => (
                   <li key={institution.id}>
                     <strong>{institution.name}</strong>
-                    <small>{institution.status ?? "active"}</small>
+                    <small>{t(institution.status ?? "active")}</small>
                   </li>
                 ))
               )}
@@ -196,15 +191,15 @@ export function Admin() {
             <div className="admin-card-head">
               <UserPlus size={20} />
               <div>
-                <p className="dashboard-kicker">Users</p>
-                <h2>Create a staff or dentist account</h2>
+                <p className="dashboard-kicker">{t("Users")}</p>
+                <h2>{t("Create a staff or dentist account")}</h2>
               </div>
             </div>
             <form className="auth-form admin-form" onSubmit={handleCreateUser}>
               {userError && <p className="auth-error">{userError}</p>}
               {userMessage && <p className="auth-success">{userMessage}</p>}
               <label className="auth-field">
-                <span>Full name</span>
+                <span>{t("Full name")}</span>
                 <input
                   type="text"
                   required
@@ -214,7 +209,7 @@ export function Admin() {
                 />
               </label>
               <label className="auth-field">
-                <span>Email</span>
+                <span>{t("Email")}</span>
                 <input
                   type="email"
                   required
@@ -224,33 +219,33 @@ export function Admin() {
                 />
               </label>
               <label className="auth-field">
-                <span>Temporary password</span>
+                <span>{t("Temporary password")}</span>
                 <input
                   type="text"
                   required
                   minLength={8}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={t("At least 8 characters")}
                 />
               </label>
               <div className="auth-field">
-                <span>Role</span>
+                <span>{t("Role")}</span>
                 <div className="auth-role-group">
                   <label className={`auth-role-option ${role === "staff" ? "is-selected" : ""}`}>
                     <input type="radio" name="admin-role" checked={role === "staff"} onChange={() => setRole("staff")} />
-                    <strong>Staff</strong>
-                    <small>Runs screenings at the school.</small>
+                    <strong>{t("Staff")}</strong>
+                    <small>{t("Runs screenings at the school.")}</small>
                   </label>
                   <label className={`auth-role-option ${role === "dentist" ? "is-selected" : ""}`}>
                     <input type="radio" name="admin-role" checked={role === "dentist"} onChange={() => setRole("dentist")} />
-                    <strong>Dentist</strong>
-                    <small>Reviews that school’s files.</small>
+                    <strong>{t("Dentist")}</strong>
+                    <small>{t("Reviews that school's files.")}</small>
                   </label>
                 </div>
               </div>
               <label className="auth-field">
-                <span>Institution</span>
+                <span>{t("Institution")}</span>
                 <select
                   required
                   value={institutionId}
@@ -258,7 +253,7 @@ export function Admin() {
                   disabled={institutions.length === 0}
                 >
                   {institutions.length === 0 ? (
-                    <option value="">Add an institution first</option>
+                    <option value="">{t("Add an institution first")}</option>
                   ) : (
                     institutions.map((institution) => (
                       <option key={institution.id} value={institution.id}>
@@ -269,18 +264,18 @@ export function Admin() {
                 </select>
               </label>
               <button type="submit" className="btn btn-primary" disabled={savingUser || institutions.length === 0}>
-                {savingUser ? "Creating…" : "Create account"}
+                {savingUser ? t("Creating…") : t("Create account")}
               </button>
             </form>
             <ul className="admin-list">
               {users.length === 0 ? (
-                <li className="admin-empty">No staff or dentist accounts yet.</li>
+                <li className="admin-empty">{t("No staff or dentist accounts yet.")}</li>
               ) : (
                 users.map((account) => (
                   <li key={account.id}>
                     <strong>{account.full_name}</strong>
                     <small>
-                      {account.role} · {account.institution_name || "No institution"} · {account.email}
+                      {t(account.role)} · {account.institution_name || t("No institution")} · {account.email}
                     </small>
                   </li>
                 ))

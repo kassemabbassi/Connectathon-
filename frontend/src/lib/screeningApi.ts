@@ -26,16 +26,21 @@ async function parseError(response: Response): Promise<string> {
   return "An unexpected error occurred. Please try again.";
 }
 
-async function authorizedJson<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+function csrfToken() {
+  return document.cookie.split("; ").find((item) => item.startsWith("dentalscreen_csrf="))?.split("=")[1] ?? "";
+}
+
+async function authorizedJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  headers.set("Authorization", `Bearer ${token}`);
+  if (init?.method && !["GET", "HEAD"].includes(init.method)) headers.set("X-CSRF-Token", csrfToken());
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
   if (!response.ok) {
     throw new ScreeningApiError(response.status, await parseError(response));
@@ -44,7 +49,6 @@ async function authorizedJson<T>(path: string, token: string, init?: RequestInit
 }
 
 export async function saveScreening(input: {
-  token: string;
   patient: PatientForm;
   photos: ScreeningPhoto[];
   notes: string;
@@ -69,8 +73,9 @@ export async function saveScreening(input: {
   const response = await fetch(`${API_BASE_URL}/screenings`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${input.token}`,
+      "X-CSRF-Token": csrfToken(),
     },
+    credentials: "include",
     body: formData,
   });
 
@@ -80,40 +85,38 @@ export async function saveScreening(input: {
   return (await response.json()) as SavedScreening;
 }
 
-export async function listScreenings(token: string): Promise<SavedScreening[]> {
-  return authorizedJson<SavedScreening[]>("/screenings", token);
+export async function listScreenings(): Promise<SavedScreening[]> {
+  return authorizedJson<SavedScreening[]>("/screenings");
 }
 
 export async function updateScreeningNotes(
-  token: string,
   screeningId: string,
   notes: string,
 ): Promise<SavedScreening> {
-  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/notes`, token, {
+  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/notes`, {
     method: "PATCH",
     body: JSON.stringify({ notes }),
   });
 }
 
 export async function updateScreeningValidation(
-  token: string,
   screeningId: string,
   validatedAngles: string[],
 ): Promise<SavedScreening> {
-  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/validation`, token, {
+  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/validation`, {
     method: "PATCH",
     body: JSON.stringify({ validated_angles: validatedAngles }),
   });
 }
 
-export async function deleteScreening(token: string, screeningId: string): Promise<void> {
-  await authorizedJson<{ deleted: boolean }>(`/screenings/${screeningId}`, token, {
+export async function deleteScreening(screeningId: string): Promise<void> {
+  await authorizedJson<{ deleted: boolean }>(`/screenings/${screeningId}`, {
     method: "DELETE",
   });
 }
 
-export async function completeFileValidation(token: string, screeningId: string): Promise<SavedScreening> {
-  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/file-validation`, token, {
+export async function completeFileValidation(screeningId: string): Promise<SavedScreening> {
+  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/file-validation`, {
     method: "PATCH",
   });
 }

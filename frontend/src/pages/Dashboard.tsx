@@ -40,7 +40,7 @@ function formatDate(value: string, language: "en" | "ar") {
 }
 
 export function Dashboard() {
-    const { token, user } = useAuth();
+    const { user } = useAuth();
     const { language, t } = useLanguage();
     const [records, setRecords] = useState<SavedScreening[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -60,12 +60,8 @@ export function Dashboard() {
         let cancelled = false;
 
         async function load() {
-            if (!token) {
-                setIsLoading(false);
-                return;
-            }
             try {
-                const items = await listScreenings(token);
+                const items = await listScreenings();
                 if (!cancelled) {
                     setRecords(items);
                     setLoadError(null);
@@ -83,7 +79,7 @@ export function Dashboard() {
         return () => {
             cancelled = true;
         };
-    }, [token]);
+    }, []);
 
     const filteredRecords = records.filter((record) => {
         const searchable = record.patient.code.toLowerCase();
@@ -108,33 +104,33 @@ export function Dashboard() {
     }, []);
 
     async function saveNotes() {
-        if (!selectedRecord || !token) return;
-        const updatedRecord = await updateScreeningNotes(token, selectedRecord.id, draftNotes);
+        if (!selectedRecord) return;
+        const updatedRecord = await updateScreeningNotes(selectedRecord.id, draftNotes);
         setRecords((current) => current.map((record) => record.id === selectedRecord.id ? updatedRecord : record));
         setNotesSaved(true);
     }
 
     async function toggleValidation(photoAngle: string) {
-        if (!selectedRecord || !token) return;
+        if (!selectedRecord) return;
         const imageKey = `${selectedRecord.id}-${photoAngle}`;
         const isValidated = validatedImages[imageKey] ?? false;
         const validatedAngles = new Set(selectedRecord.validatedAngles ?? []);
         if (isValidated) validatedAngles.delete(photoAngle);
         else validatedAngles.add(photoAngle);
-        const updatedRecord = await updateScreeningValidation(token, selectedRecord.id, [...validatedAngles]);
+        const updatedRecord = await updateScreeningValidation(selectedRecord.id, [...validatedAngles]);
         setRecords((current) => current.map((record) => record.id === selectedRecord.id ? updatedRecord : record));
         setValidatedImages((current) => ({ ...current, [imageKey]: !isValidated }));
     }
 
     async function handleDelete() {
-        if (!selectedRecord || !token || user?.role !== "dentist") return;
+        if (!selectedRecord || user?.role !== "dentist") return;
         const confirmed = window.confirm(t("Delete this patient file? This permanently removes the file and its images."));
         if (!confirmed) return;
 
         setDeleteError(null);
         setDeletePending(true);
         try {
-            await deleteScreening(token, selectedRecord.id);
+            await deleteScreening(selectedRecord.id);
             setRecords((current) => current.filter((record) => record.id !== selectedRecord.id));
             setSelectedId(null);
         } catch (error) {
@@ -145,16 +141,16 @@ export function Dashboard() {
     }
 
     async function handleCompleteValidation() {
-        if (!selectedRecord || !token || user?.role !== "dentist" || selectedRecord.fileValidated) return;
+        if (!selectedRecord || user?.role !== "dentist" || selectedRecord.fileValidated) return;
 
         setValidationError(null);
         setValidationPending(true);
         try {
             let record = selectedRecord;
             if (draftNotes !== selectedRecord.notes) {
-                record = await updateScreeningNotes(token, selectedRecord.id, draftNotes);
+                record = await updateScreeningNotes(selectedRecord.id, draftNotes);
             }
-            const updatedRecord = await completeFileValidation(token, record.id);
+            const updatedRecord = await completeFileValidation(record.id);
             setRecords((current) => current.map((item) => item.id === updatedRecord.id ? updatedRecord : item));
             setNotesSaved(true);
         } catch (error) {

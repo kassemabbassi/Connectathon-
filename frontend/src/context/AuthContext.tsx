@@ -10,15 +10,12 @@ import {
 import {
   fetchCurrentUser,
   login as loginRequest,
+  logout as logoutRequest,
   type AuthUser,
 } from "../lib/authApi";
 
-const TOKEN_KEY = "dentalscreen_token";
-const USER_KEY = "dentalscreen_user";
-
 type AuthContextValue = {
   user: AuthUser | null;
-  token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => void;
@@ -26,49 +23,23 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredUser(): AuthUser | null {
-  const raw = window.localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
-function persistSession(token: string, user: AuthUser) {
-  window.localStorage.setItem(TOKEN_KEY, token);
-  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-function clearSession() {
-  window.localStorage.removeItem(TOKEN_KEY);
-  window.localStorage.removeItem(USER_KEY);
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => window.localStorage.getItem(TOKEN_KEY));
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser());
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    // Remove JWTs left by releases that used browser storage.
+    window.localStorage.removeItem("dentalscreen_token");
+    window.localStorage.removeItem("dentalscreen_user");
 
     async function bootstrap() {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const currentUser = await fetchCurrentUser(token);
+        const currentUser = await fetchCurrentUser();
         if (cancelled) return;
         setUser(currentUser);
-        window.localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
       } catch {
         if (cancelled) return;
-        clearSession();
-        setToken(null);
         setUser(null);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -79,25 +50,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await loginRequest(email, password);
-    persistSession(response.access_token, response.user);
-    setToken(response.access_token);
     setUser(response.user);
     return response.user;
   }, []);
 
   const logout = useCallback(() => {
-    clearSession();
-    setToken(null);
+    void logoutRequest();
     setUser(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, isLoading, login, logout }),
-    [user, token, isLoading, login, logout],
+    () => ({ user, isLoading, login, logout }),
+    [user, isLoading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -33,6 +33,31 @@ const arabic: Record<string, string> = {
 };
 
 Object.assign(arabic, {
+  "SpotEarly Admin": "إدارة سبوت إيرلي",
+  "SpotEarly logo": "شعار سبوت إيرلي",
+  "Only administrators can add schools and create staff or dentist logins. You can add as many institutions as you need; each new school is added to the list and previous ones stay.": "لا يمكن إلا للمسؤولين إضافة المدارس وإنشاء حسابات لموظفي المدارس أو أطباء الأسنان. يمكنك إضافة العدد الذي تحتاج إليه من المؤسسات؛ تُضاف كل مدرسة جديدة إلى القائمة وتبقى المدارس السابقة.",
+  "Saved institutions": "المؤسسات المحفوظة",
+  "New ones are added, never replaced.": "تُضاف المؤسسات الجديدة ولا تُستبدل المؤسسات السابقة.",
+  "e.g. École Pilote Monastir": "مثال: المدرسة النموذجية بالمنستير",
+  "e.g. \u00c3\u2030cole Pilote Monastir": "مثال: المدرسة النموذجية بالمنستير",
+  "No institution yet. Add one before creating accounts.": "لا توجد مؤسسة بعد. أضف مؤسسة قبل إنشاء الحسابات.",
+  "active": "نشط",
+  "At least 8 characters": "8 أحرف على الأقل",
+  "Adding\u00e2\u20ac\u00a6": "جارٍ الإضافة…",
+  "Creating\u00e2\u20ac\u00a6": "جارٍ الإنشاء…",
+  "Runs screenings at the school.": "يجري الفحوصات في المدرسة.",
+  "Reviews that school's files.": "يراجع ملفات تلك المدرسة.",
+  "Add an institution first": "أضف مؤسسة أولاً",
+  "No staff or dentist accounts yet.": "لا توجد حسابات لموظفين أو أطباء أسنان بعد.",
+  "No institution": "لا توجد مؤسسة",
+  "staff": "موظف",
+  "dentist": "طبيب أسنان",
+  "Unable to load institutions and accounts.": "تعذّر تحميل المؤسسات والحسابات.",
+  "Institution added. Previous institutions are kept, so you can work with several schools.": "تمت إضافة المؤسسة. يتم الاحتفاظ بالمؤسسات السابقة، لذا يمكنك العمل مع عدة مدارس.",
+  "Unable to add this institution.": "تعذّر إضافة هذه المؤسسة.",
+  "Add an institution first, then create the account.": "أضف مؤسسة أولاً، ثم أنشئ الحساب.",
+  "Account created. The user can now sign in.": "تم إنشاء الحساب. يمكن للمستخدم تسجيل الدخول الآن.",
+  "Unable to create this account.": "تعذّر إنشاء هذا الحساب.",
   "File validation": "\u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0627\u0644\u0645\u0644\u0641", "File clinically validated": "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642 \u0627\u0644\u0633\u0631\u064a\u0631\u064a \u0645\u0646 \u0627\u0644\u0645\u0644\u0641", "Ready for clinical validation": "\u062c\u0627\u0647\u0632 \u0644\u0644\u062a\u062d\u0642\u0642 \u0627\u0644\u0633\u0631\u064a\u0631\u064a", "Validated": "\u062a\u0645 \u0627\u0644\u062a\u062d\u0642\u0642", "After reviewing the images and notes, confirm that this patient file is complete.": "\u0628\u0639\u062f \u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0635\u0648\u0631 \u0648\u0627\u0644\u0645\u0644\u0627\u062d\u0638\u0627\u062a\u060c \u0623\u0643\u0651\u062f \u0627\u0643\u062a\u0645\u0627\u0644 \u0645\u0644\u0641 \u0627\u0644\u0645\u0631\u064a\u0636.", "Validate patient file": "\u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0644\u0641 \u0627\u0644\u0645\u0631\u064a\u0636", "Validating…": "\u062c\u0627\u0631\u064d \u0627\u0644\u062a\u062d\u0642\u0642…", "Unable to validate this patient file.": "\u062a\u0639\u0630\u0631 \u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0645\u0644\u0641 \u0627\u0644\u0645\u0631\u064a\u0636 \u0647\u0630\u0627."
 });
 

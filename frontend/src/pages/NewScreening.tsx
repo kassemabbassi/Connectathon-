@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, FileImage, ShieldCheck, Scale } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { UserMenu } from "../components/auth/UserMenu";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
@@ -40,7 +39,6 @@ const EMPTY_FORM = (): PatientForm => ({ code: "" });
 type ScreeningStage = "form" | "analyzing" | "file";
 
 export function NewScreening() {
-  const { token } = useAuth();
   const { t } = useLanguage();
   const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
   const [shots, setShots] = useState<ShotMap>(EMPTY_SHOTS);
@@ -68,7 +66,7 @@ export function NewScreening() {
       const results = await Promise.allSettled(
         selectedAngles.map(async (angle) => ({
           angle: angle.key,
-          result: await detectCaries(shots[angle.key] as string, token ?? ""),
+          result: await detectCaries(shots[angle.key] as string),
         })),
       );
 
@@ -95,7 +93,7 @@ export function NewScreening() {
     return () => {
       cancelled = true;
     };
-  }, [stage, shots, token]);
+  }, [stage, shots]);
 
   function handleUpload(angle: AngleKey, file: File) {
     const resultImage = findResultImage(file.name);

@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, timezone
+import secrets
 from typing import Annotated
 
 import jwt
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from pwdlib import PasswordHash
 
@@ -14,7 +14,6 @@ from database import users_collection
 
 
 password_hash = PasswordHash.recommended()
-bearer_scheme = HTTPBearer(auto_error=False)
 
 
 class SignupRequest(BaseModel):
@@ -68,20 +67,24 @@ def public_user(user: dict) -> dict:
     }
 
 
-def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-) -> dict:
+def get_current_user(request: Request) -> dict:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or missing authentication token.",
-        headers={"WWW-Authenticate": "Bearer"},
     )
-    if credentials is None:
+    token = request.cookies.get(settings.session_cookie_name)
+    if not token:
         raise unauthorized
+
+    if request.method not in {"GET", "HEAD", "OPTIONS"}:
+        csrf_cookie = request.cookies.get(settings.csrf_cookie_name)
+        csrf_header = request.headers.get("X-CSRF-Token")
+        if not csrf_cookie or not csrf_header or not secrets.compare_digest(csrf_cookie, csrf_header):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid CSRF token.")
 
     try:
         payload = jwt.decode(
-            credentials.credentials,
+            token,
             settings.jwt_secret,
             algorithms=[settings.jwt_algorithm],
         )

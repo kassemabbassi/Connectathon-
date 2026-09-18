@@ -10,7 +10,6 @@ import {
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { PriorityBadge } from "../components/patient/PriorityBadge";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { useAuth } from "../context/AuthContext";
 import type { CariesDetection } from "../lib/detectionApi";
 import { ScreeningApiError, saveScreening } from "../lib/screeningApi";
 import "./NewScreening.css";
@@ -44,7 +43,6 @@ export function PatientFile({
     onStartAnother,
 }: PatientFileProps) {
     void detections;
-    const { token } = useAuth();
     const [notes, setNotes] = useState("");
     const [saved, setSaved] = useState(false);
     const [savePending, setSavePending] = useState(false);
@@ -75,16 +73,10 @@ export function PatientFile({
                 : "Possible early signs — monitor";
 
     async function handleSave() {
-        if (!token) {
-            setSaveError("Your session expired. Sign in again before saving.");
-            return;
-        }
-
         setSaveError(null);
         setSavePending(true);
         try {
             await saveScreening({
-                token,
                 patient,
                 photos,
                 notes,
