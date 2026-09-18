@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
 import "./Auth.css";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 export function Unauthorized() {
   const { user, logout } = useAuth();
@@ -11,6 +12,7 @@ export function Unauthorized() {
   return (
     <div className="status-page">
       <div className="status-card">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}><LanguageSwitcher /></div>
         <Link to="/" className="auth-brand">
           <img src={logo} alt="SpotEarly logo" />
           <span>SpotEarly</span>

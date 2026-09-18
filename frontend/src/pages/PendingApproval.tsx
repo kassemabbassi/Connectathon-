@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import "./Auth.css";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 export function PendingApproval() {
   return (
     <div className="status-page">
       <div className="status-card">
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}><LanguageSwitcher /></div>
         <Link to="/" className="auth-brand">
           <img src={logo} alt="SpotEarly logo" />
           <span>SpotEarly</span>

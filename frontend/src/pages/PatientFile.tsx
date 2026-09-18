@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { PriorityBadge } from "../components/patient/PriorityBadge";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useAuth } from "../context/AuthContext";
 import type { CariesDetection } from "../lib/detectionApi";
 import { ScreeningApiError, saveScreening } from "../lib/screeningApi";
@@ -113,6 +114,7 @@ export function PatientFile({
                     <span className="patient-file-status">
                         <CheckCircle2 size={15} /> Analysis complete
                     </span>
+                    <LanguageSwitcher />
                 </div>
             </header>
 
