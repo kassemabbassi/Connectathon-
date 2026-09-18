@@ -16,6 +16,7 @@ import logo from "../assets/logo.png";
 import { UserMenu } from "../components/auth/UserMenu";
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import {
     listScreenings,
     updateScreeningNotes,
@@ -24,8 +25,8 @@ import {
 import type { SavedScreening } from "./screeningTypes";
 import "./Dashboard.css";
 
-function formatDate(value: string) {
-    return new Intl.DateTimeFormat("en-GB", {
+function formatDate(value: string, language: "en" | "ar") {
+    return new Intl.DateTimeFormat(language === "ar" ? "ar-TN" : "en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -36,6 +37,7 @@ function formatDate(value: string) {
 
 export function Dashboard() {
     const { token } = useAuth();
+    const { language } = useLanguage();
     const [records, setRecords] = useState<SavedScreening[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -168,7 +170,7 @@ export function Dashboard() {
 
                     {selectedRecord ? (
                         <section className="dashboard-detail-panel">
-                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt)}</span></div><span className="dashboard-review-badge">{selectedRecord.result}</span></div>
+                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt, language)}</span></div><span className="dashboard-review-badge">{selectedRecord.result}</span></div>
                             <div className="dashboard-detail-fields"><div><small>Privacy</small><strong>Anonymous record</strong></div><div><small>Patient code</small><strong>{selectedRecord.patient.code}</strong></div></div>
                             <div className="dashboard-detail-section">
                                 <div className="dashboard-section-title"><ImageIcon size={16} /><h3>Images</h3><span>{selectedRecord.photos.length} · Click to inspect</span></div>

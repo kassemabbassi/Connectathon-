@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, FileImage, ShieldCheck, Scale } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { UserMenu } from "../components/auth/UserMenu";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
 import { CameraModal } from "../components/screening/CameraModal";
@@ -40,6 +41,7 @@ type ScreeningStage = "form" | "analyzing" | "file";
 
 export function NewScreening() {
   const { token } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
   const [shots, setShots] = useState<ShotMap>(EMPTY_SHOTS);
   const [resultShots, setResultShots] = useState<ShotMap>(EMPTY_RESULTS);
@@ -158,7 +160,7 @@ export function NewScreening() {
 
   const screeningPhotos: ScreeningPhoto[] = ANGLES.filter((angle) => shots[angle.key]).map((angle) => ({
     angle: angle.key,
-    label: angle.label,
+    label: t(angle.label),
     image: shots[angle.key] as string,
     resultImage: resultShots[angle.key] ?? undefined,
     detections: detectionsByAngle[angle.key],
@@ -188,21 +190,21 @@ export function NewScreening() {
               <img src={logo} alt="SpotEarly logo" className="brand-logo" />
               <span className="brand-name">SpotEarly</span>
             </div>
-            <span className="analysis-header-status">Screening in progress</span>
+            <span className="analysis-header-status">{t("Screening in progress")}</span>
           </div>
         </header>
         <main className="analysis-main" aria-live="polite">
           <div className="analysis-orbit"><span /></div>
-          <p className="screening-eyebrow">AI-assisted review</p>
-          <h1>Analyzing screening {form.code}</h1>
-          <p className="analysis-sub">Our prototype is checking the captured images for visible areas that may need clinical review.</p>
+          <p className="screening-eyebrow">{t("AI-assisted review")}</p>
+          <h1>{t("Analyzing screening")} {form.code}</h1>
+          <p className="analysis-sub">{t("Our prototype is checking the captured images for visible areas that may need clinical review.")}</p>
           <div className="analysis-steps">
-            <span className="analysis-step is-done"><CheckCircle2 size={17} /> Images received</span>
-            <span className="analysis-step is-active"><span className="analysis-spinner" /> Detecting possible caries</span>
-            <span className="analysis-step"><FileImage size={17} /> Preparing patient file</span>
+            <span className="analysis-step is-done"><CheckCircle2 size={17} /> {t("Images received")}</span>
+            <span className="analysis-step is-active"><span className="analysis-spinner" /> {t("Detecting possible caries")}</span>
+            <span className="analysis-step"><FileImage size={17} /> {t("Preparing patient file")}</span>
           </div>
           <div className="analysis-progress"><span /></div>
-          <p className="analysis-disclaimer">This demo simulates the AI processing step.</p>
+          <p className="analysis-disclaimer">{t("This demo simulates the AI processing step.")}</p>
         </main>
       </div>
     );
@@ -213,7 +215,7 @@ export function NewScreening() {
       <header className="screening-header">
         <div className="screening-header-inner">
           <Link to="/" className="screening-back">
-            <ArrowLeft size={16} /> Back to home
+            <ArrowLeft size={16} /> {t("Back to home")}
           </Link>
           <div className="brand">
             <img src={logo} alt="SpotEarly logo" className="brand-logo" />
@@ -225,44 +227,43 @@ export function NewScreening() {
 
       <main className="screening-main">
         <div className="screening-intro">
-          <p className="screening-eyebrow">New screening</p>
-          <h1>Create an anonymous screening record</h1>
+          <p className="screening-eyebrow">{t("New screening")}</p>
+          <h1>{t("Create an anonymous screening record")}</h1>
           <p className="screening-sub">
-            Enter the patient's non-identifying code, then capture or upload one or more clear
-            photos of the child's teeth.
+            {t("Enter the patient's non-identifying code, then capture or upload one or more clear photos of the child's teeth.")}
           </p>
 
           <div className="step-pills">
             <span className="step-pill step-pill-active">
-              <span className="step-pill-index">1</span> Enter patient code
+              <span className="step-pill-index">1</span> {t("Enter patient code")}
             </span>
             <span className="step-pill">
-              <span className="step-pill-index">2</span> Capture photos
+              <span className="step-pill-index">2</span> {t("Capture photos")}
             </span>
           </div>
         </div>
 
         <form className="screening-form" onSubmit={handleSubmit}>
           <section className="form-card">
-            <h2 className="form-card-title">Anonymous patient code</h2>
+            <h2 className="form-card-title">{t("Anonymous patient code")}</h2>
 
             <div className="form-grid">
               <label className="field field-span-2">
                 <span className="field-label">
-                  <ShieldCheck size={15} /> Patient code
+                  <ShieldCheck size={15} /> {t("Patient code")}
                 </span>
                 <input
                   type="text"
                   className="field-input"
                   value={form.code}
                   onChange={(event) => setForm({ code: event.target.value })}
-                  placeholder="Enter the patient's anonymous code"
+                  placeholder={t("Enter the patient's anonymous code")}
                   minLength={6}
                   maxLength={64}
                   required
                   autoComplete="off"
                 />
-                <small className="auth-field-hint">Enter the code assigned to this patient. It must contain no name, age, or government/student identity information.</small>
+                <small className="auth-field-hint">{t("Enter the code assigned to this patient. It must contain no name, age, or government/student identity information.")}</small>
               </label>
             </div>
           </section>
@@ -271,33 +272,32 @@ export function NewScreening() {
             <div className="consent-card-head">
               <span className="consent-icon"><Scale size={20} /></span>
               <div>
-                <p className="screening-eyebrow">Required before capture</p>
-                <h2 id="consent-title">Parent or guardian authorisation</h2>
+                <p className="screening-eyebrow">{t("Required before capture")}</p>
+                <h2 id="consent-title">{t("Consent and parental authorisation")}</h2>
               </div>
             </div>
-            <p className="consent-intro">This school screening involves a minor&apos;s health-related images. Do not capture or upload a photo until the required authorisation has been verified.</p>
+            <p className="consent-intro">{t("This school screening involves a minor's health-related images. Do not capture or upload a photo until the required authorisation has been verified.")}</p>
             <div className="consent-details">
-              <div><strong>Purpose</strong><span>AI-assisted screening and review by an authorised dental professional. It is not an automated diagnosis.</span></div>
-              <div><strong>Data minimisation</strong><span>The record uses an anonymous patient code; no name, age, national ID, or student ID is collected in this form.</span></div>
-              <div><strong>Retention</strong><span>Images, findings, and consent metadata are retained for 12 months for clinical follow-up, then automatically deleted.</span></div>
-              <div><strong>Your rights</strong><span>Consent may be withdrawn before screening. Access, correction, and deletion requests can be sent to the platform administrator.</span></div>
+              <div><strong>{t("Purpose")}</strong><span>{t("AI-assisted screening and review by an authorised dental professional. It is not an automated diagnosis.")}</span></div>
+              <div><strong>{t("Data minimisation")}</strong><span>{t("The record uses an anonymous patient code; no name, age, national ID, or student ID is collected in this form.")}</span></div>
+              <div><strong>{t("Informed consent")}</strong><span>{t("The parent or legal guardian must receive the screening information and give their authorisation before any image is captured or processed.")}</span></div>
+              <div><strong>{t("Data protection")}</strong><span>{t("Personal and health-related data are handled under the applicable Tunisian data-protection framework.")}</span></div>
             </div>
-            <p className="consent-legal">Tunisia: Organic Law No. 2004-63 of 27 July 2004 and the INPDP framework apply. For a child&apos;s personal and health data, guardian consent and any required family-judge authorisation must be obtained before processing.</p>
+            <p className="consent-legal">{t("Tunisia: Organic Law No. 2004-63 of 27 July 2004 and the framework of the INPDP (National Authority for the Protection of Personal Data) apply. A minor's personal and health-related data may only be processed after the parent or legal guardian has given informed authorisation.")}</p>
             <label className="consent-check">
               <input type="checkbox" checked={guardianConsentConfirmed} onChange={(event) => setGuardianConsentConfirmed(event.target.checked)} />
-              <span>I confirm that the parent or legal guardian has given informed authorisation for this screening, that any required legal authorisation has been obtained, and that the information above was provided.</span>
+              <span>{t("I confirm that the parent or legal guardian has received the required information and has given informed authorisation for this child's screening.")}</span>
             </label>
           </section>
 
           <section className="form-card photos-card">
             <div className="photos-card-head">
-              <h2 className="form-card-title">Teeth photos</h2>
+              <h2 className="form-card-title">{t("Teeth photos")}</h2>
               <p className="photos-card-sub">
-                Capture at least the front bite. More angles help the AI model give a more
-                complete read.
+                {t("Capture at least the front bite. More angles help the AI model give a more complete read.")}
               </p>
               <button type="button" className="demo-images-btn" onClick={handleLoadDemoImages} disabled={!guardianConsentConfirmed}>
-                <FileImage size={15} /> Load demo images
+                <FileImage size={15} /> {t("Load demo images")}
               </button>
             </div>
 
@@ -305,8 +305,8 @@ export function NewScreening() {
               {ANGLES.map((angle) => (
                 <CaptureSlot
                   key={angle.key}
-                  label={angle.label}
-                  hint={angle.hint}
+                  label={t(angle.label)}
+                  hint={t(angle.hint)}
                   required={angle.required}
                   disabled={!guardianConsentConfirmed}
                   image={shots[angle.key]}
@@ -320,10 +320,10 @@ export function NewScreening() {
 
           <div className="screening-actionbar">
             <p className="screening-progress-text">
-              {capturedCount} of {ANGLES.length} angles captured
+              {capturedCount} / {ANGLES.length} {t("angles captured")}
             </p>
             <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
-              Start screening
+              {t("Start screening")}
             </button>
           </div>
         </form>
@@ -331,7 +331,7 @@ export function NewScreening() {
 
       {activeCamera && activeAngle && (
         <CameraModal
-          title={`Capture: ${activeAngle.label}`}
+          title={`${t("Capture")}: ${t(activeAngle.label)}`}
           onCapture={handleCaptured}
           onClose={() => setActiveCamera(null)}
         />

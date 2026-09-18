@@ -47,12 +47,12 @@ export function CaptureSlot({
 
       {image ? (
         <div className="capture-slot-preview">
-          <img src={image} alt={`${label} capture`} />
+          <img src={image} alt={t("Captured photo")} />
           <button
             type="button"
             className="capture-slot-remove"
             onClick={onRemove}
-            aria-label={`Remove ${label} photo`}
+            aria-label={t("Remove photo")}
           >
             <X size={14} />
           </button>
