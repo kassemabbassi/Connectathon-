@@ -33,6 +33,9 @@ const arabic: Record<string, string> = {
 };
 
 Object.assign(arabic, {
+  "Save patient file": "حفظ ملف المريض",
+  "File saved": "تم حفظ الملف",
+  "Saving…": "جارٍ الحفظ…",
   "SpotEarly Admin": "إدارة سبوت إيرلي",
   "SpotEarly logo": "شعار سبوت إيرلي",
   "Only administrators can add schools and create staff or dentist logins. You can add as many institutions as you need; each new school is added to the list and previous ones stay.": "لا يمكن إلا للمسؤولين إضافة المدارس وإنشاء حسابات لموظفي المدارس أو أطباء الأسنان. يمكنك إضافة العدد الذي تحتاج إليه من المؤسسات؛ تُضاف كل مدرسة جديدة إلى القائمة وتبقى المدارس السابقة.",

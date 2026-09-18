@@ -10,6 +10,7 @@ import {
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { PriorityBadge } from "../components/patient/PriorityBadge";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 import type { CariesDetection } from "../lib/detectionApi";
 import { ScreeningApiError, saveScreening } from "../lib/screeningApi";
 import "./NewScreening.css";
@@ -42,6 +43,7 @@ export function PatientFile({
     onBack,
     onStartAnother,
 }: PatientFileProps) {
+    const { t } = useLanguage();
     void detections;
     const [notes, setNotes] = useState("");
     const [saved, setSaved] = useState(false);
@@ -120,7 +122,7 @@ export function PatientFile({
                     <div className="patient-file-actions">
                         <button type="button" className={`btn ${saved ? "btn-saved" : "btn-primary"}`} onClick={() => void handleSave()} disabled={savePending || saved}>
                             {saved ? <CheckCircle2 size={16} /> : <Save size={16} />}
-                            {saved ? "File saved" : savePending ? "Saving…" : "Save patient file"}
+                            {saved ? t("File saved") : savePending ? t("Saving…") : t("Save patient file")}
                         </button>
                         <button type="button" className="btn btn-ghost-navy" onClick={onStartAnother}>
                             New screening
