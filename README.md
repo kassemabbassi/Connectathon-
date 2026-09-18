@@ -418,11 +418,7 @@ SUPABASE_SERVICE_KEY=server-only-service-role-key
 SUPABASE_BUCKET=screening-images
 ```
 
-For a non-default API URL, create `frontend/.env.local`:
 
-```dotenv
-VITE_API_URL=http://localhost:8000
-```
 
 Never place `SUPABASE_SERVICE_KEY` in frontend environment variables or commit it to source control.
 
