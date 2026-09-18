@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { AuthApiError } from "../lib/authApi";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
@@ -48,12 +49,19 @@ export function Login() {
   }
 
   return (
-    <div className="auth-page">
-      <section className="auth-panel">
-        <Link to="/" className="auth-brand">
-          <img src={logo} alt="SpotEarly logo" />
-          <span>SpotEarly</span>
-        </Link>
+    <div className="auth-page auth-page-centered">
+      <section className="auth-card">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+          <Link to="/" className="auth-brand" style={{ marginBottom: 0 }}>
+            <img src={logo} alt="SpotEarly logo" />
+            <span>SpotEarly</span>
+          </Link>
+
+          <Link to="/" className="auth-back" style={{ marginBottom: 0 }}>
+            <ArrowLeft size={16} />
+            Back to home
+          </Link>
+        </div>
 
         <h1>Sign in</h1>
         <p className="auth-lede">
@@ -93,16 +101,6 @@ export function Login() {
           </button>
         </form>
       </section>
-
-      <aside className="auth-visual" aria-hidden="true">
-        <div className="auth-visual-copy">
-          <h2>Accounts are issued by the platform</h2>
-          <p>
-            A SpotEarly administrator creates each school, then creates staff and dentist logins.
-            Staff and dentists only sign in with those credentials.
-          </p>
-        </div>
-      </aside>
     </div>
   );
 }
