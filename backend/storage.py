@@ -46,6 +46,18 @@ def upload_screening_image(path: str, content: bytes, content_type: str) -> None
         ) from error
 
 
+def delete_screening_images(paths: list[str]) -> None:
+    if not paths:
+        return
+    try:
+        supabase_client().storage.from_(settings.supabase_bucket).remove(paths)
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Unable to delete screening images from Supabase. {error}",
+        ) from error
+
+
 def signed_image_url(path: str) -> str:
     try:
         result = supabase_client().storage.from_(settings.supabase_bucket).create_signed_url(

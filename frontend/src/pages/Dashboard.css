@@ -808,3 +808,41 @@
         max-height: 42vh;
     }
 }
+
+.dashboard-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dashboard-delete-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border: 1px solid rgba(193, 47, 47, .25);
+    border-radius: 8px;
+    background: #fff5f5;
+    color: #b42318;
+    cursor: pointer;
+    font: inherit;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.dashboard-delete-button:hover:not(:disabled) {
+    background: #ffe7e7;
+}
+
+.dashboard-delete-button:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+.dashboard-delete-error {
+    margin: 14px 0 -4px;
+    color: #b42318;
+    font-size: .78rem;
+}

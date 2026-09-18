@@ -28,6 +28,7 @@ from database import ensure_indexes, institutions_collection, patient_files_coll
 from storage import (
     ALLOWED_ANGLES,
     ANGLE_LABELS,
+    delete_screening_images,
     image_storage_path,
     signed_image_url,
     upload_screening_image,
@@ -440,3 +441,19 @@ def update_screening_validation(
     )
     updated = patient_files_collection.find_one({"_id": record["_id"]})
     return serialize_screening(updated)
+
+
+@app.delete("/screenings/{screening_id}")
+def delete_screening(
+    screening_id: str,
+    current_user: dict = Depends(require_roles("dentist")),
+):
+    record = _require_institution_record(current_user, screening_id)
+    storage_paths = [
+        image.get("storage_path")
+        for image in record.get("images", [])
+        if image.get("storage_path")
+    ]
+    delete_screening_images(storage_paths)
+    patient_files_collection.delete_one({"_id": record["_id"]})
+    return {"deleted": True}

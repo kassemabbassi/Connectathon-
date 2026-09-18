@@ -33,6 +33,10 @@ const arabic: Record<string, string> = {
 };
 
 Object.assign(arabic, {
+  "Delete file": "\u062d\u0630\u0641 \u0627\u0644\u0645\u0644\u0641", "Deleting…": "\u062c\u0627\u0631\u064d \u0627\u0644\u062d\u0630\u0641…", "Delete this patient file? This permanently removes the file and its images.": "\u0647\u0644 \u062a\u0631\u064a\u062f \u062d\u0630\u0641 \u0645\u0644\u0641 \u0627\u0644\u0645\u0631\u064a\u0636 \u0647\u0630\u0627\u061f \u0633\u064a\u062a\u0645 \u062d\u0630\u0641 \u0627\u0644\u0645\u0644\u0641 \u0648\u0635\u0648\u0631\u0647 \u0646\u0647\u0627\u0626\u064a\u0627\u064b.", "Unable to delete this patient file.": "\u062a\u0639\u0630\u0631 \u062d\u0630\u0641 \u0645\u0644\u0641 \u0627\u0644\u0645\u0631\u064a\u0636 \u0647\u0630\u0627."
+});
+
+Object.assign(arabic, {
   "Required before capture": "مطلوب قبل التقاط الصور",
   "Parent or guardian authorisation": "تفويض الوالد أو الولي القانوني",
   "Purpose": "الغرض", "Data minimisation": "تقليل البيانات", "Retention": "مدة الاحتفاظ", "Your rights": "حقوقكم",

@@ -106,4 +106,10 @@ export async function updateScreeningValidation(
   });
 }
 
+export async function deleteScreening(token: string, screeningId: string): Promise<void> {
+  await authorizedJson<{ deleted: boolean }>(`/screenings/${screeningId}`, token, {
+    method: "DELETE",
+  });
+}
+
 export { ScreeningApiError };

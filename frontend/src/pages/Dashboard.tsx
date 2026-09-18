@@ -9,6 +9,7 @@ import {
     Save,
     Search,
     ShieldCheck,
+    Trash2,
     User,
     X,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import {
     listScreenings,
+    deleteScreening,
     updateScreeningNotes,
     updateScreeningValidation,
 } from "../lib/screeningApi";
@@ -36,8 +38,8 @@ function formatDate(value: string, language: "en" | "ar") {
 }
 
 export function Dashboard() {
-    const { token } = useAuth();
-    const { language } = useLanguage();
+    const { token, user } = useAuth();
+    const { language, t } = useLanguage();
     const [records, setRecords] = useState<SavedScreening[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -47,6 +49,8 @@ export function Dashboard() {
     const [notesSaved, setNotesSaved] = useState(false);
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
     const [validatedImages, setValidatedImages] = useState<Record<string, boolean>>({});
+    const [deletePending, setDeletePending] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -118,6 +122,24 @@ export function Dashboard() {
         setValidatedImages((current) => ({ ...current, [imageKey]: !isValidated }));
     }
 
+    async function handleDelete() {
+        if (!selectedRecord || !token || user?.role !== "dentist") return;
+        const confirmed = window.confirm(t("Delete this patient file? This permanently removes the file and its images."));
+        if (!confirmed) return;
+
+        setDeleteError(null);
+        setDeletePending(true);
+        try {
+            await deleteScreening(token, selectedRecord.id);
+            setRecords((current) => current.filter((record) => record.id !== selectedRecord.id));
+            setSelectedId(null);
+        } catch (error) {
+            setDeleteError(error instanceof Error ? error.message : t("Unable to delete this patient file."));
+        } finally {
+            setDeletePending(false);
+        }
+    }
+
     return (
         <div className="dashboard-page">
             <header className="dashboard-header">
@@ -170,7 +192,8 @@ export function Dashboard() {
 
                     {selectedRecord ? (
                         <section className="dashboard-detail-panel">
-                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt, language)}</span></div><span className="dashboard-review-badge">{selectedRecord.result}</span></div>
+                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt, language)}</span></div><div className="dashboard-detail-actions"><span className="dashboard-review-badge">{selectedRecord.result}</span>{user?.role === "dentist" && <button type="button" className="dashboard-delete-button" onClick={() => void handleDelete()} disabled={deletePending}><Trash2 size={15} />{deletePending ? t("Deleting…") : t("Delete file")}</button>}</div></div>
+                            {deleteError && <p className="dashboard-delete-error">{deleteError}</p>}
                             <div className="dashboard-detail-fields"><div><small>Privacy</small><strong>Anonymous record</strong></div><div><small>Patient code</small><strong>{selectedRecord.patient.code}</strong></div></div>
                             <div className="dashboard-detail-section">
                                 <div className="dashboard-section-title"><ImageIcon size={16} /><h3>Images</h3><span>{selectedRecord.photos.length} · Click to inspect</span></div>
