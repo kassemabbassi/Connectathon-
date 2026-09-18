@@ -12,6 +12,7 @@ type CaptureSlotProps = {
   onOpenCamera: () => void;
   onUpload: (file: File) => void;
   onRemove: () => void;
+  disabled?: boolean;
 };
 
 export function CaptureSlot({
@@ -22,6 +23,7 @@ export function CaptureSlot({
   onOpenCamera,
   onUpload,
   onRemove,
+  disabled = false,
 }: CaptureSlotProps) {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,13 +64,14 @@ export function CaptureSlot({
         <div className="capture-slot-empty">
           <p className="capture-slot-hint">{hint}</p>
           <div className="capture-slot-actions">
-            <button type="button" className="capture-slot-btn" onClick={onOpenCamera}>
+            <button type="button" className="capture-slot-btn" onClick={onOpenCamera} disabled={disabled}>
               <Camera size={16} /> {t("Capture")}
             </button>
             <button
               type="button"
               className="capture-slot-btn"
               onClick={() => fileInputRef.current?.click()}
+              disabled={disabled}
             >
               <Upload size={16} /> {t("Upload")}
             </button>
@@ -79,6 +82,7 @@ export function CaptureSlot({
             accept="image/*"
             className="capture-slot-file-input"
             onChange={handleFileChange}
+            disabled={disabled}
           />
         </div>
       )}

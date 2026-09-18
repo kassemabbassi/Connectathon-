@@ -79,11 +79,6 @@ const DIFFERENT_POINTS = [
     body: "No diagnosis is ever issued automatically. The AI flags, a professional decides.",
   },
   {
-    icon: Database,
-    title: "Real Data Only",
-    body: "Built and tested on real, consented screening images — never simulated data.",
-  },
-  {
     icon: ClipboardList,
     title: "Auditable by Design",
     body: "Every capture, detection, and validation is logged and traceable end to end.",

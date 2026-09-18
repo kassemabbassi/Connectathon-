@@ -1,13 +1,11 @@
 import { useState } from "react";
 import {
     ArrowLeft,
-    CalendarDays,
     CheckCircle2,
     FileText,
     Image as ImageIcon,
     Save,
     ShieldCheck,
-    User,
 } from "lucide-react";
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { PriorityBadge } from "../components/patient/PriorityBadge";
@@ -17,11 +15,7 @@ import { ScreeningApiError, saveScreening } from "../lib/screeningApi";
 import "./NewScreening.css";
 import "./PatientFile.css";
 
-type PatientForm = {
-    fullName: string;
-    age: string;
-    identity: string;
-};
+type PatientForm = { code: string };
 
 type ScreeningPhoto = {
     angle: string;
@@ -95,6 +89,7 @@ export function PatientFile({
                 notes,
                 result: resultTitle,
                 flaggedAreas: findings.length,
+                guardianConsentConfirmed: true,
             });
             setSaved(true);
         } catch (error) {
@@ -125,7 +120,7 @@ export function PatientFile({
                 <div className="patient-file-heading">
                     <div className="patient-file-title-group">
                         <p className="screening-eyebrow">Patient file</p>
-                        <h1>{patient.fullName}</h1>
+                        <h1>{patient.code}</h1>
                         <p className="patient-file-sub">Screening record created {createdAt}</p>
                     </div>
                     <div className="patient-file-actions">
@@ -142,16 +137,8 @@ export function PatientFile({
 
                 <section className="patient-file-summary" aria-label="Patient details">
                     <div className="patient-summary-item">
-                        <User size={18} />
-                        <span><b>Patient</b>{patient.fullName}</span>
-                    </div>
-                    <div className="patient-summary-item">
-                        <CalendarDays size={18} />
-                        <span><b>Age</b>{patient.age} years</span>
-                    </div>
-                    <div className="patient-summary-item">
                         <ShieldCheck size={18} />
-                        <span><b>Identity / ID</b>{patient.identity}</span>
+                        <span><b>Patient code</b>{patient.code}</span>
                     </div>
                 </section>
 

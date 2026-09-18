@@ -1,9 +1,7 @@
 import type { CariesDetection } from "../lib/detectionApi";
 
 export type PatientForm = {
-    fullName: string;
-    age: string;
-    identity: string;
+    code: string;
 };
 
 export type ScreeningPhoto = {

@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, Lock, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, FileImage, ShieldCheck, Scale } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { UserMenu } from "../components/auth/UserMenu";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
@@ -35,14 +34,18 @@ const RESULT_ASSETS = import.meta.glob("../assets/last*.jpeg", {
   query: "?url",
 }) as Record<string, string>;
 
-const EMPTY_FORM: PatientForm = { fullName: "", age: "", identity: "" };
+function createPatientCode() {
+  const random = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).toUpperCase().padStart(7, "0");
+  return `PT-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${random}`;
+}
+
+const EMPTY_FORM = (): PatientForm => ({ code: createPatientCode() });
 
 type ScreeningStage = "form" | "analyzing" | "file";
 
 export function NewScreening() {
   const { token } = useAuth();
   const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
-  const [attempted, setAttempted] = useState(false);
   const [shots, setShots] = useState<ShotMap>(EMPTY_SHOTS);
   const [resultShots, setResultShots] = useState<ShotMap>(EMPTY_RESULTS);
   const [activeCamera, setActiveCamera] = useState<AngleKey | null>(null);
@@ -50,13 +53,12 @@ export function NewScreening() {
   const [detections, setDetections] = useState<CariesDetection[] | null>(null);
   const [detectionsByAngle, setDetectionsByAngle] = useState<Partial<Record<AngleKey, CariesDetection[]>>>({});
   const [detectionSource, setDetectionSource] = useState<"live" | "demo" | null>(null);
+  const [guardianConsentConfirmed, setGuardianConsentConfirmed] = useState(false);
 
-  const ageNumber = Number(form.age);
-  const isAgeValid = form.age.trim() !== "" && Number.isFinite(ageNumber);
-  const formValid = form.fullName.trim().length > 1 && isAgeValid && form.identity.trim().length > 0;
+  const formValid = form.code.length > 0;
 
   const capturedCount = ANGLES.filter((angle) => shots[angle.key]).length;
-  const canSubmit = formValid && capturedCount > 0;
+  const canSubmit = formValid && guardianConsentConfirmed && capturedCount > 0;
 
   useEffect(() => {
     if (stage !== "analyzing") return;
@@ -97,12 +99,6 @@ export function NewScreening() {
       cancelled = true;
     };
   }, [stage, shots, token]);
-
-  function updateField(field: keyof PatientForm) {
-    return (event: ChangeEvent<HTMLInputElement>) => {
-      setForm((prev) => ({ ...prev, [field]: event.target.value }));
-    };
-  }
 
   function handleUpload(angle: AngleKey, file: File) {
     const resultImage = findResultImage(file.name);
@@ -146,20 +142,19 @@ export function NewScreening() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setAttempted(true);
     if (!canSubmit) return;
 
     setDetections(null);
     setDetectionsByAngle({});
     setDetectionSource(null);
+    setGuardianConsentConfirmed(false);
     setStage("analyzing");
   }
 
   function handleStartAnother() {
-    setForm(EMPTY_FORM);
+    setForm(EMPTY_FORM());
     setShots(EMPTY_SHOTS);
     setResultShots(EMPTY_RESULTS);
-    setAttempted(false);
     setDetections(null);
     setDetectionsByAngle({});
     setDetectionSource(null);
@@ -204,7 +199,7 @@ export function NewScreening() {
         <main className="analysis-main" aria-live="polite">
           <div className="analysis-orbit"><span /></div>
           <p className="screening-eyebrow">AI-assisted review</p>
-          <h1>Analyzing {form.fullName}&apos;s screening</h1>
+          <h1>Analyzing screening {form.code}</h1>
           <p className="analysis-sub">Our prototype is checking the captured images for visible areas that may need clinical review.</p>
           <div className="analysis-steps">
             <span className="analysis-step is-done"><CheckCircle2 size={17} /> Images received</span>
@@ -236,15 +231,15 @@ export function NewScreening() {
       <main className="screening-main">
         <div className="screening-intro">
           <p className="screening-eyebrow">New screening</p>
-          <h1>Add a child's details and teeth photos</h1>
+          <h1>Create an anonymous screening record</h1>
           <p className="screening-sub">
-            Fill in the details below, then capture or upload one or more clear photos of the
-            child's teeth. Add any angles you have available for a more complete record.
+            A non-identifying patient code is generated automatically. Then capture or upload one
+            or more clear photos of the child's teeth.
           </p>
 
           <div className="step-pills">
             <span className="step-pill step-pill-active">
-              <span className="step-pill-index">1</span> Patient details
+              <span className="step-pill-index">1</span> Anonymous code
             </span>
             <span className="step-pill">
               <span className="step-pill-index">2</span> Capture photos
@@ -254,77 +249,57 @@ export function NewScreening() {
 
         <form className="screening-form" onSubmit={handleSubmit}>
           <section className="form-card">
-            <h2 className="form-card-title">Patient information</h2>
+            <h2 className="form-card-title">Anonymous patient code</h2>
 
             <div className="form-grid">
               <label className="field field-span-2">
                 <span className="field-label">
-                  <User size={15} /> Full name
+                  <ShieldCheck size={15} /> Patient code
                 </span>
                 <input
                   type="text"
                   className="field-input"
-                  placeholder="e.g. Amira Ben Salah"
-                  value={form.fullName}
-                  onChange={updateField("fullName")}
+                  value={form.code}
+                  readOnly
                 />
-                {attempted && form.fullName.trim().length <= 1 && (
-                  <span className="field-error">Enter the child's full name.</span>
-                )}
-              </label>
-
-              <label className="field">
-                <span className="field-label">
-                  <CalendarDays size={15} /> Age
-                </span>
-                <input
-                  type="number"
-                  className="field-input"
-                  placeholder="e.g. 9"
-                  value={form.age}
-                  onChange={updateField("age")}
-                />
-                {attempted && !isAgeValid && (
-                  <span className="field-error">Enter a valid age.</span>
-                )}
-              </label>
-
-              <label className="field">
-                <span className="field-label">
-                  <BadgeCheck size={15} /> Identity / ID number
-                </span>
-                <input
-                  type="text"
-                  className="field-input"
-                  placeholder="CIN, student ID, or record number"
-                  value={form.identity}
-                  onChange={updateField("identity")}
-                />
-                {attempted && form.identity.trim().length === 0 && (
-                  <span className="field-error">Enter an identity or ID number.</span>
-                )}
+                <small className="auth-field-hint">This code contains no name, age, or government/student identity information.</small>
               </label>
             </div>
           </section>
 
-          <section className={`form-card photos-card ${!formValid ? "photos-card-locked" : ""}`}>
+          <section className="consent-card" aria-labelledby="consent-title">
+            <div className="consent-card-head">
+              <span className="consent-icon"><Scale size={20} /></span>
+              <div>
+                <p className="screening-eyebrow">Required before capture</p>
+                <h2 id="consent-title">Parent or guardian authorisation</h2>
+              </div>
+            </div>
+            <p className="consent-intro">This school screening involves a minor&apos;s health-related images. Do not capture or upload a photo until the required authorisation has been verified.</p>
+            <div className="consent-details">
+              <div><strong>Purpose</strong><span>AI-assisted screening and review by an authorised dental professional. It is not an automated diagnosis.</span></div>
+              <div><strong>Data minimisation</strong><span>The record uses an anonymous patient code; no name, age, national ID, or student ID is collected in this form.</span></div>
+              <div><strong>Retention</strong><span>Images, findings, and consent metadata are retained for 12 months for clinical follow-up, then automatically deleted.</span></div>
+              <div><strong>Your rights</strong><span>Consent may be withdrawn before screening. Access, correction, and deletion requests can be sent to the platform administrator.</span></div>
+            </div>
+            <p className="consent-legal">Tunisia: Organic Law No. 2004-63 of 27 July 2004 and the INPDP framework apply. For a child&apos;s personal and health data, guardian consent and any required family-judge authorisation must be obtained before processing.</p>
+            <label className="consent-check">
+              <input type="checkbox" checked={guardianConsentConfirmed} onChange={(event) => setGuardianConsentConfirmed(event.target.checked)} />
+              <span>I confirm that the parent or legal guardian has given informed authorisation for this screening, that any required legal authorisation has been obtained, and that the information above was provided.</span>
+            </label>
+          </section>
+
+          <section className="form-card photos-card">
             <div className="photos-card-head">
               <h2 className="form-card-title">Teeth photos</h2>
               <p className="photos-card-sub">
                 Capture at least the front bite. More angles help the AI model give a more
                 complete read.
               </p>
-              <button type="button" className="demo-images-btn" onClick={handleLoadDemoImages} disabled={!formValid}>
+              <button type="button" className="demo-images-btn" onClick={handleLoadDemoImages} disabled={!guardianConsentConfirmed}>
                 <FileImage size={15} /> Load demo images
               </button>
             </div>
-
-            {!formValid && (
-              <div className="photos-lock-overlay">
-                <Lock size={18} />
-                <p>Fill in the patient details above to unlock photo capture.</p>
-              </div>
-            )}
 
             <div className="capture-grid">
               {ANGLES.map((angle) => (
@@ -333,9 +308,10 @@ export function NewScreening() {
                   label={angle.label}
                   hint={angle.hint}
                   required={angle.required}
+                  disabled={!guardianConsentConfirmed}
                   image={shots[angle.key]}
-                  onOpenCamera={() => setActiveCamera(angle.key)}
-                  onUpload={(file) => handleUpload(angle.key, file)}
+                  onOpenCamera={() => guardianConsentConfirmed && setActiveCamera(angle.key)}
+                  onUpload={(file) => { if (guardianConsentConfirmed) handleUpload(angle.key, file); }}
                   onRemove={() => handleRemove(angle.key)}
                 />
               ))}
@@ -346,7 +322,7 @@ export function NewScreening() {
             <p className="screening-progress-text">
               {capturedCount} of {ANGLES.length} angles captured
             </p>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary" disabled={!canSubmit}>
               Start screening
             </button>
           </div>

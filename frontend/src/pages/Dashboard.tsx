@@ -76,7 +76,7 @@ export function Dashboard() {
     }, [token]);
 
     const filteredRecords = records.filter((record) => {
-        const searchable = `${record.patient.fullName} ${record.patient.identity}`.toLowerCase();
+        const searchable = record.patient.code.toLowerCase();
         return searchable.includes(query.toLowerCase().trim());
     });
     const selectedRecord = records.find((record) => record.id === selectedId) ?? filteredRecords[0];
@@ -157,7 +157,7 @@ export function Dashboard() {
                                 {filteredRecords.map((record) => (
                                     <button type="button" key={record.id} className={`record-row ${selectedRecord?.id === record.id ? "is-selected" : ""}`} onClick={() => setSelectedId(record.id)}>
                                         <span className="record-avatar"><User size={17} /></span>
-                                        <span className="record-main"><strong>{record.patient.fullName}</strong><small>{record.patient.identity} · Age {record.patient.age}</small></span>
+                                        <span className="record-main"><strong>{record.patient.code}</strong><small>Anonymous patient record</small></span>
                                         <span className="record-meta"><b>{record.photos.length} photos</b><small>{record.notes.trim() ? "Notes added" : "No notes"}</small></span>
                                         <ArrowRight size={16} className="record-arrow" />
                                     </button>
@@ -168,8 +168,8 @@ export function Dashboard() {
 
                     {selectedRecord ? (
                         <section className="dashboard-detail-panel">
-                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.fullName}</h2><span>Saved {formatDate(selectedRecord.savedAt)}</span></div><span className="dashboard-review-badge">{selectedRecord.result}</span></div>
-                            <div className="dashboard-detail-fields"><div><small>Age</small><strong>{selectedRecord.patient.age} years</strong></div><div><small>Identity / ID</small><strong>{selectedRecord.patient.identity}</strong></div></div>
+                            <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt)}</span></div><span className="dashboard-review-badge">{selectedRecord.result}</span></div>
+                            <div className="dashboard-detail-fields"><div><small>Privacy</small><strong>Anonymous record</strong></div><div><small>Patient code</small><strong>{selectedRecord.patient.code}</strong></div></div>
                             <div className="dashboard-detail-section">
                                 <div className="dashboard-section-title"><ImageIcon size={16} /><h3>Images</h3><span>{selectedRecord.photos.length} · Click to inspect</span></div>
                                 <div className="dashboard-image-grid">
@@ -193,7 +193,7 @@ export function Dashboard() {
                             </div>
                             <div className="dashboard-detail-section dashboard-notes-section">
                                 <div className="dashboard-section-title"><FileText size={16} /><h3>Doctor notes</h3><span>{draftNotes.trim() ? "Clinical note" : "Pending"}</span></div>
-                                <textarea className="dashboard-notes-editor" value={draftNotes} onChange={(event) => { setDraftNotes(event.target.value); setNotesSaved(false); }} placeholder="Add observations, recommendations, or follow-up details..." aria-label={`Doctor notes for ${selectedRecord.patient.fullName}`} />
+                                <textarea className="dashboard-notes-editor" value={draftNotes} onChange={(event) => { setDraftNotes(event.target.value); setNotesSaved(false); }} placeholder="Add observations, recommendations, or follow-up details..." aria-label={`Doctor notes for ${selectedRecord.patient.code}`} />
                                 <div className="dashboard-notes-footer"><span>{draftNotes.length} characters</span><button type="button" className={`dashboard-notes-save ${notesSaved ? "is-saved" : ""}`} onClick={() => void saveNotes()}>{notesSaved ? <CheckCircle2 size={14} /> : <Save size={14} />}{notesSaved ? "Notes saved" : "Save notes"}</button></div>
                             </div>
                         </section>
@@ -207,7 +207,7 @@ export function Dashboard() {
                 return (
                     <div className="image-review-backdrop" role="dialog" aria-modal="true" aria-label={`Review ${photo.label}`} onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedPhotoIndex(null); }}>
                         <div className="image-review-modal">
-                            <div className="image-review-header"><div><p className="dashboard-kicker">Image review</p><h2>{photo.label}</h2><span>{selectedRecord.patient.fullName} · {selectedRecord.patient.identity}</span></div><button type="button" className="image-review-close" onClick={() => setSelectedPhotoIndex(null)} aria-label="Close image review"><X size={19} /></button></div>
+                            <div className="image-review-header"><div><p className="dashboard-kicker">Image review</p><h2>{photo.label}</h2><span>{selectedRecord.patient.code}</span></div><button type="button" className="image-review-close" onClick={() => setSelectedPhotoIndex(null)} aria-label="Close image review"><X size={19} /></button></div>
                             <div className="image-review-body">
                                 <div className="image-review-visual">
                                     {photo.detections !== undefined ? (

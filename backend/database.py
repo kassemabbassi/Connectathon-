@@ -16,3 +16,4 @@ def ensure_indexes() -> None:
     institutions_collection.create_index("name", unique=True)
     patient_files_collection.create_index([("institution_id", 1), ("created_at", -1)])
     patient_files_collection.create_index("created_by")
+    patient_files_collection.create_index("delete_after", expireAfterSeconds=0)

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type Language = "en" | "ar";
 
@@ -72,9 +72,12 @@ function DocumentTranslator({ language }: { language: Language }) {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => localStorage.getItem("spotearly-language") === "ar" ? "ar" : "en");
+  const [language, setLanguageState] = useState<Language>(() => localStorage.getItem("spotearly-language") === "ar" ? "ar" : "en");
+  const setLanguage = useCallback((nextLanguage: Language) => {
+    setLanguageState(nextLanguage);
+  }, []);
   useEffect(() => { localStorage.setItem("spotearly-language", language); document.documentElement.lang = language; document.documentElement.dir = language === "ar" ? "rtl" : "ltr"; }, [language]);
-  const value = useMemo(() => ({ language, setLanguage, t: (text: string) => language === "ar" ? (arabic[text] ?? text) : text }), [language]);
+  const value = useMemo(() => ({ language, setLanguage, t: (text: string) => language === "ar" ? (arabic[text] ?? text) : text }), [language, setLanguage]);
   return <LanguageContext.Provider value={value}><DocumentTranslator language={language} />{children}</LanguageContext.Provider>;
 }
 

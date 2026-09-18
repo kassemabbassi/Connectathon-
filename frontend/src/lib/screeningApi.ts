@@ -50,11 +50,11 @@ export async function saveScreening(input: {
   notes: string;
   result: string;
   flaggedAreas: number;
+  guardianConsentConfirmed: boolean;
 }): Promise<SavedScreening> {
   const formData = new FormData();
-  formData.append("full_name", input.patient.fullName);
-  formData.append("age", String(Number(input.patient.age)));
-  formData.append("identity", input.patient.identity);
+  formData.append("patient_code", input.patient.code);
+  formData.append("guardian_consent_confirmed", String(input.guardianConsentConfirmed));
   formData.append("notes", input.notes);
   formData.append("result", input.result);
   formData.append("flagged_areas", String(input.flaggedAreas));

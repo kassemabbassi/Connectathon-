@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from json import JSONDecodeError, loads
 from pathlib import Path
 
@@ -239,9 +239,8 @@ def serialize_screening(record: dict) -> dict:
     return {
         "id": str(record["_id"]),
         "patient": {
-            "fullName": patient.get("full_name", ""),
-            "age": str(patient.get("age", "")),
-            "identity": patient.get("identity", ""),
+            # Older records may retain legacy fields, but new screenings never store them.
+            "code": patient.get("code") or patient.get("identity") or "Uncoded record",
         },
         "photos": photos,
         "notes": record.get("notes") or "",
@@ -309,9 +308,8 @@ async def detect(
 
 @app.post("/screenings", status_code=201)
 async def create_screening(
-    full_name: str = Form(...),
-    age: int = Form(...),
-    identity: str = Form(...),
+    patient_code: str = Form(..., min_length=6, max_length=64),
+    guardian_consent_confirmed: bool = Form(...),
     notes: str = Form(""),
     result: str = Form(""),
     flagged_areas: int = Form(0),
@@ -319,6 +317,8 @@ async def create_screening(
     files: list[UploadFile] = File(...),
     current_user: dict = Depends(require_roles("staff")),
 ):
+    if not guardian_consent_confirmed:
+        raise HTTPException(status_code=400, detail="Verified parent or guardian authorisation is required before a minor's screening can be processed.")
     try:
         detections_by_angle = loads(detections_json)
         if not isinstance(detections_by_angle, dict):
@@ -373,9 +373,12 @@ async def create_screening(
         "institution_id": institution_id,
         "created_by": current_user["_id"],
         "patient": {
-            "full_name": full_name.strip(),
-            "age": age,
-            "identity": identity.strip(),
+            "code": patient_code.strip(),
+        },
+        "consent": {
+            "guardian_confirmed": True,
+            "confirmed_at": datetime.now(timezone.utc),
+            "legal_reference": "Organic Law No. 2004-63 / INPDP",
         },
         "images": images,
         "notes": notes.strip(),
@@ -384,6 +387,7 @@ async def create_screening(
         "validated_angles": [],
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
+        "delete_after": datetime.now(timezone.utc) + timedelta(days=365),
     }
     patient_files_collection.insert_one(record)
     return serialize_screening(record)
