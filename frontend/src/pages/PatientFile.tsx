@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
     ArrowLeft,
     CalendarDays,
@@ -12,7 +11,9 @@ import {
 } from "lucide-react";
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
 import { PriorityBadge } from "../components/patient/PriorityBadge";
+import { useAuth } from "../context/AuthContext";
 import type { CariesDetection } from "../lib/detectionApi";
+import { ScreeningApiError, saveScreening } from "../lib/screeningApi";
 import "./NewScreening.css";
 import "./PatientFile.css";
 
@@ -47,10 +48,11 @@ export function PatientFile({
     onBack,
     onStartAnother,
 }: PatientFileProps) {
-    const navigate = useNavigate();
+    const { token } = useAuth();
     const [notes, setNotes] = useState("");
     const [saved, setSaved] = useState(false);
     const [savePending, setSavePending] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const createdAt = new Intl.DateTimeFormat("en-GB", {
         day: "2-digit",
         month: "short",
@@ -76,26 +78,33 @@ export function PatientFile({
                 ? "Needs dentist review"
                 : "Possible early signs — monitor";
 
-    useEffect(() => {
-        if (!savePending) return;
-        const timer = window.setTimeout(() => navigate("/dashboard"), 850);
-        return () => window.clearTimeout(timer);
-    }, [navigate, savePending]);
+    async function handleSave() {
+        if (!token) {
+            setSaveError("Your session expired. Sign in again before saving.");
+            return;
+        }
 
-    function handleSave() {
-        const record = {
-            id: `${patient.identity}-${Date.now()}`,
-            patient,
-            photos,
-            notes,
-            result: resultTitle,
-            flaggedAreas: findings.length,
-            savedAt: new Date().toISOString(),
-        };
-        window.localStorage.setItem(`dentalscreen-record-${record.id}`, JSON.stringify(record));
-        window.dispatchEvent(new Event("dentalscreen-records-updated"));
-        setSaved(true);
+        setSaveError(null);
         setSavePending(true);
+        try {
+            await saveScreening({
+                token,
+                patient,
+                photos,
+                notes,
+                result: resultTitle,
+                flaggedAreas: findings.length,
+            });
+            setSaved(true);
+        } catch (error) {
+            if (error instanceof ScreeningApiError) {
+                setSaveError(error.message);
+            } else {
+                setSaveError("Unable to save this file. Check that the backend and Supabase storage are running.");
+            }
+        } finally {
+            setSavePending(false);
+        }
     }
 
     return (
@@ -119,15 +128,16 @@ export function PatientFile({
                         <p className="patient-file-sub">Screening record created {createdAt}</p>
                     </div>
                     <div className="patient-file-actions">
-                        <button type="button" className={`btn ${saved ? "btn-saved" : "btn-primary"}`} onClick={handleSave} disabled={savePending}>
+                        <button type="button" className={`btn ${saved ? "btn-saved" : "btn-primary"}`} onClick={() => void handleSave()} disabled={savePending || saved}>
                             {saved ? <CheckCircle2 size={16} /> : <Save size={16} />}
-                            {saved ? "File saved" : "Save patient file"}
+                            {saved ? "File saved" : savePending ? "Saving…" : "Save patient file"}
                         </button>
                         <button type="button" className="btn btn-ghost-navy" onClick={onStartAnother}>
                             New screening
                         </button>
                     </div>
                 </div>
+                {saveError && <p className="patient-file-error">{saveError}</p>}
 
                 <section className="patient-file-summary" aria-label="Patient details">
                     <div className="patient-summary-item">
@@ -231,7 +241,7 @@ export function PatientFile({
                             placeholder="Add observations, recommendations, or follow-up details..."
                             aria-label="Doctor notes"
                         />
-                        <p className="notes-hint">Notes are saved in this prototype while the page is open.</p>
+                        <p className="notes-hint">Staff observations are stored with the file. The partner dentist can add clinical notes from the dashboard.</p>
                     </section>
                 </div>
 

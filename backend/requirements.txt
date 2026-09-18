@@ -3,3 +3,9 @@ uvicorn[standard]
 python-multipart
 ultralytics
 pillow
+pymongo
+pydantic-settings
+PyJWT
+pwdlib[argon2]
+email-validator
+supabase

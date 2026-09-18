@@ -122,9 +122,14 @@ export function Landing() {
               </a>
             ))}
           </nav>
-          <Link to="/new" className="btn btn-primary">
-            Start Screening
-          </Link>
+          <div className="header-actions">
+            <Link to="/login" className="btn btn-ghost-navy">
+              Sign in
+            </Link>
+            <Link to="/signup" className="btn btn-primary">
+              Create account
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -146,12 +151,12 @@ export function Landing() {
               checked by a licensed professional.
             </p>
             <div className="hero-actions reveal reveal-4">
-              <Link to="/new" className="btn btn-primary">
-                Start Screening
+              <Link to="/signup" className="btn btn-primary">
+                Create account
               </Link>
-              <a href="#how-it-works" className="btn btn-outline">
-                See how it works
-              </a>
+              <Link to="/login" className="btn btn-outline">
+                Sign in
+              </Link>
             </div>
           </div>
 

@@ -91,6 +91,16 @@
     color: var(--clear);
 }
 
+.patient-file-error {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--urgent-bg);
+    color: var(--urgent);
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
 .patient-file-summary {
     gap: 0;
     background: var(--surface);

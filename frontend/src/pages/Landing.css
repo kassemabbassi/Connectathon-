@@ -93,6 +93,13 @@
   justify-content: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .header-nav a {
   position: relative;
   text-decoration: none;

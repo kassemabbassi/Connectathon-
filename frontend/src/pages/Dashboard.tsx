@@ -6,7 +6,6 @@ import {
     CheckCircle2,
     FileText,
     Image as ImageIcon,
-    Plus,
     Save,
     Search,
     ShieldCheck,
@@ -14,29 +13,16 @@ import {
     X,
 } from "lucide-react";
 import logo from "../assets/logo.png";
+import { UserMenu } from "../components/auth/UserMenu";
 import { DetectionOverlay } from "../components/screening/DetectionOverlay";
+import { useAuth } from "../context/AuthContext";
+import {
+    listScreenings,
+    updateScreeningNotes,
+    updateScreeningValidation,
+} from "../lib/screeningApi";
 import type { SavedScreening } from "./screeningTypes";
 import "./Dashboard.css";
-
-const RECORD_PREFIX = "dentalscreen-record-";
-const RECORDS_EVENT = "dentalscreen-records-updated";
-
-function readRecords(): SavedScreening[] {
-    const records: SavedScreening[] = [];
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-        const key = window.localStorage.key(index);
-        if (!key?.startsWith(RECORD_PREFIX)) continue;
-        try {
-            const record = JSON.parse(window.localStorage.getItem(key) ?? "null") as SavedScreening;
-            if (record?.patient?.fullName && record.savedAt) {
-                records.push({ ...record, id: record.id ?? key, storageKey: key });
-            }
-        } catch {
-            // Ignore an incomplete browser record and keep the dashboard usable.
-        }
-    }
-    return records.sort((first, second) => second.savedAt.localeCompare(first.savedAt));
-}
 
 function formatDate(value: string) {
     return new Intl.DateTimeFormat("en-GB", {
@@ -49,7 +35,10 @@ function formatDate(value: string) {
 }
 
 export function Dashboard() {
-    const [records, setRecords] = useState<SavedScreening[]>(readRecords);
+    const { token } = useAuth();
+    const [records, setRecords] = useState<SavedScreening[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [draftNotes, setDraftNotes] = useState("");
@@ -58,16 +47,33 @@ export function Dashboard() {
     const [validatedImages, setValidatedImages] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        function refresh() {
-            setRecords(readRecords());
+        let cancelled = false;
+
+        async function load() {
+            if (!token) {
+                setIsLoading(false);
+                return;
+            }
+            try {
+                const items = await listScreenings(token);
+                if (!cancelled) {
+                    setRecords(items);
+                    setLoadError(null);
+                }
+            } catch {
+                if (!cancelled) {
+                    setLoadError("Unable to load screening files for this institution.");
+                }
+            } finally {
+                if (!cancelled) setIsLoading(false);
+            }
         }
-        window.addEventListener("storage", refresh);
-        window.addEventListener(RECORDS_EVENT, refresh);
+
+        void load();
         return () => {
-            window.removeEventListener("storage", refresh);
-            window.removeEventListener(RECORDS_EVENT, refresh);
+            cancelled = true;
         };
-    }, []);
+    }, [token]);
 
     const filteredRecords = records.filter((record) => {
         const searchable = `${record.patient.fullName} ${record.patient.identity}`.toLowerCase();
@@ -91,27 +97,23 @@ export function Dashboard() {
         return () => window.removeEventListener("keydown", closeOnEscape);
     }, []);
 
-    function saveNotes() {
-        if (!selectedRecord) return;
-        const updatedRecord = { ...selectedRecord, notes: draftNotes, notesUpdatedAt: new Date().toISOString() };
-        window.localStorage.setItem(selectedRecord.storageKey ?? `${RECORD_PREFIX}${selectedRecord.id}`, JSON.stringify(updatedRecord));
+    async function saveNotes() {
+        if (!selectedRecord || !token) return;
+        const updatedRecord = await updateScreeningNotes(token, selectedRecord.id, draftNotes);
         setRecords((current) => current.map((record) => record.id === selectedRecord.id ? updatedRecord : record));
-        window.dispatchEvent(new Event(RECORDS_EVENT));
         setNotesSaved(true);
     }
 
-    function toggleValidation(photoAngle: string) {
-        if (!selectedRecord) return;
+    async function toggleValidation(photoAngle: string) {
+        if (!selectedRecord || !token) return;
         const imageKey = `${selectedRecord.id}-${photoAngle}`;
         const isValidated = validatedImages[imageKey] ?? false;
         const validatedAngles = new Set(selectedRecord.validatedAngles ?? []);
         if (isValidated) validatedAngles.delete(photoAngle);
         else validatedAngles.add(photoAngle);
-        const updatedRecord = { ...selectedRecord, validatedAngles: [...validatedAngles] };
-        window.localStorage.setItem(selectedRecord.storageKey ?? `${RECORD_PREFIX}${selectedRecord.id}`, JSON.stringify(updatedRecord));
+        const updatedRecord = await updateScreeningValidation(token, selectedRecord.id, [...validatedAngles]);
         setRecords((current) => current.map((record) => record.id === selectedRecord.id ? updatedRecord : record));
         setValidatedImages((current) => ({ ...current, [imageKey]: !isValidated }));
-        window.dispatchEvent(new Event(RECORDS_EVENT));
     }
 
     return (
@@ -122,7 +124,7 @@ export function Dashboard() {
                         <img src={logo} alt="SpotEarly logo" />
                         <span>SpotEarly</span>
                     </Link>
-                    <Link to="/new" className="btn btn-primary dashboard-new-button"><Plus size={16} /> New screening</Link>
+                    <UserMenu />
                 </div>
             </header>
 
@@ -131,7 +133,7 @@ export function Dashboard() {
                     <div>
                         <p className="screening-eyebrow">Clinical workspace</p>
                         <h1>Screening dashboard</h1>
-                        <p>Review saved patient files, notes, images, and AI triage results in one place.</p>
+                        <p>Review patient files created by staff of your institution, then add clinical notes.</p>
                     </div>
                     <span className="dashboard-live"><Activity size={15} /> Live records</span>
                 </div>
@@ -149,7 +151,7 @@ export function Dashboard() {
                             <label className="dashboard-search"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search patients" /></label>
                         </div>
                         {filteredRecords.length === 0 ? (
-                            <div className="dashboard-empty"><ClipboardList size={28} /><h3>{records.length ? "No matching files" : "No saved files yet"}</h3><p>{records.length ? "Try another patient name or ID." : "Save a completed screening to see it here."}</p></div>
+                            <div className="dashboard-empty"><ClipboardList size={28} /><h3>{records.length ? "No matching files" : isLoading ? "Loading files…" : "No saved files yet"}</h3><p>{loadError ?? (records.length ? "Try another patient name or ID." : "Files saved by school staff of your institution will appear here.")}</p></div>
                         ) : (
                             <div className="record-list">
                                 {filteredRecords.map((record) => (
@@ -192,9 +194,8 @@ export function Dashboard() {
                             <div className="dashboard-detail-section dashboard-notes-section">
                                 <div className="dashboard-section-title"><FileText size={16} /><h3>Doctor notes</h3><span>{draftNotes.trim() ? "Clinical note" : "Pending"}</span></div>
                                 <textarea className="dashboard-notes-editor" value={draftNotes} onChange={(event) => { setDraftNotes(event.target.value); setNotesSaved(false); }} placeholder="Add observations, recommendations, or follow-up details..." aria-label={`Doctor notes for ${selectedRecord.patient.fullName}`} />
-                                <div className="dashboard-notes-footer"><span>{draftNotes.length} characters</span><button type="button" className={`dashboard-notes-save ${notesSaved ? "is-saved" : ""}`} onClick={saveNotes}>{notesSaved ? <CheckCircle2 size={14} /> : <Save size={14} />}{notesSaved ? "Notes saved" : "Save notes"}</button></div>
+                                <div className="dashboard-notes-footer"><span>{draftNotes.length} characters</span><button type="button" className={`dashboard-notes-save ${notesSaved ? "is-saved" : ""}`} onClick={() => void saveNotes()}>{notesSaved ? <CheckCircle2 size={14} /> : <Save size={14} />}{notesSaved ? "Notes saved" : "Save notes"}</button></div>
                             </div>
-                            <Link to="/new" className="dashboard-open-link">Create another screening <ArrowRight size={15} /></Link>
                         </section>
                     ) : <section className="dashboard-detail-panel dashboard-detail-empty"><ClipboardList size={30} /><h2>Select a patient file</h2><p>Choose a saved record to review its full details.</p></section>}
                 </div>
@@ -218,9 +219,9 @@ export function Dashboard() {
                                 </div>
                                 <aside className="image-review-sidebar">
                                     <div className="image-review-status"><ShieldCheck size={18} /><div><strong>{isValidated ? "Validated by doctor" : "Awaiting validation"}</strong><p>{isValidated ? "This image has been reviewed." : "Confirm the image before closing the file."}</p></div></div>
-                                    <button type="button" className={`image-review-validate ${isValidated ? "is-validated" : ""}`} onClick={() => toggleValidation(photo.angle)}>{isValidated ? <><CheckCircle2 size={16} /> Image validated</> : <><ShieldCheck size={16} /> Mark as validated</>}</button>
+                                    <button type="button" className={`image-review-validate ${isValidated ? "is-validated" : ""}`} onClick={() => void toggleValidation(photo.angle)}>{isValidated ? <><CheckCircle2 size={16} /> Image validated</> : <><ShieldCheck size={16} /> Mark as validated</>}</button>
                                     <label className="image-review-notes"><span><FileText size={15} /> Doctor notes</span><textarea value={draftNotes} onChange={(event) => { setDraftNotes(event.target.value); setNotesSaved(false); }} placeholder="Add observations for this review..." /></label>
-                                    <button type="button" className={`dashboard-notes-save image-review-save ${notesSaved ? "is-saved" : ""}`} onClick={saveNotes}>{notesSaved ? <CheckCircle2 size={14} /> : <Save size={14} />}{notesSaved ? "Notes saved" : "Save notes"}</button>
+                                    <button type="button" className={`dashboard-notes-save image-review-save ${notesSaved ? "is-saved" : ""}`} onClick={() => void saveNotes()}>{notesSaved ? <CheckCircle2 size={14} /> : <Save size={14} />}{notesSaved ? "Notes saved" : "Save notes"}</button>
                                 </aside>
                             </div>
                         </div>

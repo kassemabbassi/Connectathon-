@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, LayoutDashboard, Lock, User } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, CheckCircle2, FileImage, Lock, User } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { UserMenu } from "../components/auth/UserMenu";
 import { CaptureSlot } from "../components/screening/CaptureSlot";
 import { CameraModal } from "../components/screening/CameraModal";
 import logo from "../assets/logo.png";
@@ -38,6 +40,7 @@ const EMPTY_FORM: PatientForm = { fullName: "", age: "", identity: "" };
 type ScreeningStage = "form" | "analyzing" | "file";
 
 export function NewScreening() {
+  const { token } = useAuth();
   const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
   const [attempted, setAttempted] = useState(false);
   const [shots, setShots] = useState<ShotMap>(EMPTY_SHOTS);
@@ -66,7 +69,7 @@ export function NewScreening() {
       const results = await Promise.allSettled(
         selectedAngles.map(async (angle) => ({
           angle: angle.key,
-          result: await detectCaries(shots[angle.key] as string),
+          result: await detectCaries(shots[angle.key] as string, token ?? ""),
         })),
       );
 
@@ -82,10 +85,10 @@ export function NewScreening() {
         }
       }
 
-      const frontDetections = nextDetections.front;
+      const liveCount = Object.keys(nextDetections).length;
       setDetectionsByAngle(nextDetections);
-      setDetections(frontDetections ?? null);
-      setDetectionSource(frontDetections !== undefined ? "live" : "demo");
+      setDetections(nextDetections.front ?? Object.values(nextDetections)[0] ?? null);
+      setDetectionSource(liveCount > 0 ? "live" : "demo");
       setStage("file");
     }
 
@@ -93,7 +96,7 @@ export function NewScreening() {
     return () => {
       cancelled = true;
     };
-  }, [stage, shots]);
+  }, [stage, shots, token]);
 
   function updateField(field: keyof PatientForm) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -226,6 +229,7 @@ export function NewScreening() {
             <img src={logo} alt="SpotEarly logo" className="brand-logo" />
             <span className="brand-name">SpotEarly</span>
           </div>
+          <UserMenu />
         </div>
       </header>
 
@@ -237,12 +241,6 @@ export function NewScreening() {
             Fill in the details below, then capture or upload one or more clear photos of the
             child's teeth. Add any angles you have available for a more complete record.
           </p>
-
-          <div className="screening-intro-actions">
-            <Link to="/dashboard" className="screening-dashboard-link">
-              <LayoutDashboard size={16} /> View screening dashboard
-            </Link>
-          </div>
 
           <div className="step-pills">
             <span className="step-pill step-pill-active">
