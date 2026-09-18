@@ -1,6 +1,12 @@
 export type UserRole = "staff" | "dentist" | "admin";
 export type UserStatus = "pending" | "active" | "rejected" | "suspended";
 
+export type Institution = {
+  id: string;
+  name: string;
+  status?: string;
+};
+
 export type AuthUser = {
   id: string;
   full_name: string;
@@ -8,21 +14,12 @@ export type AuthUser = {
   role: UserRole;
   institution_id: string;
   status: UserStatus;
-};
-
-export type Institution = {
-  id: string;
-  name: string;
+  institution_name?: string;
 };
 
 export type LoginResponse = {
   access_token: string;
   token_type: "bearer";
-  user: AuthUser;
-};
-
-export type SignupResponse = {
-  message: string;
   user: AuthUser;
 };
 
@@ -72,8 +69,8 @@ async function request<T>(path: string, init?: RequestInit, token?: string | nul
   return (await response.json()) as T;
 }
 
-export async function fetchInstitutions(): Promise<Institution[]> {
-  return request<Institution[]>("/institutions");
+export async function fetchInstitutions(token: string): Promise<Institution[]> {
+  return request<Institution[]>("/institutions", undefined, token);
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -83,7 +80,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 }
 
-export type SignupPayload = {
+export type CreateUserPayload = {
   full_name: string;
   email: string;
   password: string;
@@ -91,11 +88,30 @@ export type SignupPayload = {
   institution_id: string;
 };
 
-export async function signup(payload: SignupPayload): Promise<SignupResponse> {
-  return request<SignupResponse>("/auth/signup", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export async function createInstitution(token: string, name: string): Promise<Institution> {
+  return request<Institution>(
+    "/admin/institutions",
+    {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    },
+    token,
+  );
+}
+
+export async function fetchAdminUsers(token: string): Promise<AuthUser[]> {
+  return request<AuthUser[]>("/admin/users", undefined, token);
+}
+
+export async function createUserAccount(token: string, payload: CreateUserPayload): Promise<{ message: string; user: AuthUser }> {
+  return request<{ message: string; user: AuthUser }>(
+    "/admin/users",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    token,
+  );
 }
 
 export async function fetchCurrentUser(token: string): Promise<AuthUser> {

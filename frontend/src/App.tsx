@@ -1,13 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { GuestRoute, ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
-import { Signup } from "./pages/Signup";
 import { PendingApproval } from "./pages/PendingApproval";
 import { Unauthorized } from "./pages/Unauthorized";
 import { NewScreening } from "./pages/NewScreening";
 import { Dashboard } from "./pages/Dashboard";
+import { Admin } from "./pages/Admin";
 
 function App() {
   return (
@@ -23,16 +23,17 @@ function App() {
               </GuestRoute>
             }
           />
-          <Route
-            path="/signup"
-            element={
-              <GuestRoute>
-                <Signup />
-              </GuestRoute>
-            }
-          />
+          <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route path="/pending" element={<PendingApproval />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/new"
             element={
@@ -44,7 +45,7 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={["dentist", "admin"]}>
+              <ProtectedRoute allowedRoles={["dentist"]}>
                 <Dashboard />
               </ProtectedRoute>
             }

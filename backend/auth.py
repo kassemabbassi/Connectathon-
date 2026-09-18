@@ -34,6 +34,10 @@ class AccountStatusRequest(BaseModel):
     status: str
 
 
+class InstitutionCreateRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+
+
 def normalize_email(email: str) -> str:
     return email.strip().lower()
 
@@ -42,22 +46,24 @@ def create_access_token(user: dict) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(
         minutes=settings.access_token_minutes
     )
+    institution_id = user.get("institution_id")
     payload = {
         "sub": str(user["_id"]),
         "role": user["role"],
-        "institution_id": str(user["institution_id"]),
+        "institution_id": str(institution_id) if institution_id else "",
         "exp": expires_at,
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
 def public_user(user: dict) -> dict:
+    institution_id = user.get("institution_id")
     return {
         "id": str(user["_id"]),
         "full_name": user["full_name"],
         "email": user["email"],
         "role": user["role"],
-        "institution_id": str(user["institution_id"]),
+        "institution_id": str(institution_id) if institution_id else "",
         "status": user["status"],
     }
 

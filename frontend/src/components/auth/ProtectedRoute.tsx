@@ -52,9 +52,8 @@ export function GuestRoute({ children }: GuestRouteProps) {
   }
 
   if (user?.status === "active") {
-    if (user.role === "dentist" || user.role === "admin") {
-      return <Navigate to="/dashboard" replace />;
-    }
+    if (user.role === "admin") return <Navigate to="/admin" replace />;
+    if (user.role === "dentist") return <Navigate to="/dashboard" replace />;
     return <Navigate to="/new" replace />;
   }
 

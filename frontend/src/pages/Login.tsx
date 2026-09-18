@@ -6,7 +6,8 @@ import logo from "../assets/logo.png";
 import "./Auth.css";
 
 function homeRouteForRole(role: string) {
-  if (role === "dentist" || role === "admin") return "/dashboard";
+  if (role === "admin") return "/admin";
+  if (role === "dentist") return "/dashboard";
   return "/new";
 }
 
@@ -56,7 +57,7 @@ export function Login() {
 
         <h1>Sign in</h1>
         <p className="auth-lede">
-          Access your institution workspace. Staff members run screenings; dentists review flagged cases.
+          Staff and dentists sign in with the account created for their school. Administrators sign in to manage institutions and users.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -91,18 +92,14 @@ export function Login() {
             {isSubmitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
-
-        <p className="auth-footer-link">
-          No account yet? <Link to="/signup">Create one</Link>
-        </p>
       </section>
 
       <aside className="auth-visual" aria-hidden="true">
         <div className="auth-visual-copy">
-          <h2>Secure access for school screening teams</h2>
+          <h2>Accounts are issued by the platform</h2>
           <p>
-            Each account is tied to an institution and validated before use. Only authorized staff
-            and partner dentists can access patient screening data.
+            A SpotEarly administrator creates each school, then creates staff and dentist logins.
+            Staff and dentists only sign in with those credentials.
           </p>
         </div>
       </aside>

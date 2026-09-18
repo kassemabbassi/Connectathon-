@@ -6,7 +6,7 @@ import "./Auth.css";
 export function Unauthorized() {
   const { user, logout } = useAuth();
 
-  const homeHref = user?.role === "dentist" || user?.role === "admin" ? "/dashboard" : "/new";
+  const homeHref = user?.role === "admin" ? "/admin" : user?.role === "dentist" ? "/dashboard" : "/new";
 
   return (
     <div className="status-page">
@@ -17,8 +17,7 @@ export function Unauthorized() {
         </Link>
         <h1>Access not allowed</h1>
         <p>
-          Your account role does not include access to this page. Staff members can run screenings;
-          dentists review institution cases from the dashboard.
+          Your account role does not include access to this page. Staff run screenings, dentists review cases, and administrators manage institutions and accounts.
         </p>
         <div className="status-actions">
           <Link to={homeHref} className="btn btn-primary">

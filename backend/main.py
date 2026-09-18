@@ -10,8 +10,11 @@ from ultralytics import YOLO
 from PIL import Image
 import io
 
+from pymongo.errors import DuplicateKeyError
+
 from auth import (
     AccountStatusRequest,
+    InstitutionCreateRequest,
     LoginRequest,
     SignupRequest,
     create_access_token,
@@ -65,15 +68,61 @@ def health():
 
 
 @app.get("/institutions")
-def list_institutions():
-    institutions = institutions_collection.find(
-        {"status": "active"}, {"name": 1}
-    ).sort("name", 1)
-    return [{"id": str(item["_id"]), "name": item["name"]} for item in institutions]
+def list_institutions(current_user: dict = Depends(require_roles("admin"))):
+    institutions = institutions_collection.find({}, {"name": 1, "status": 1}).sort("name", 1)
+    return [
+        {
+            "id": str(item["_id"]),
+            "name": item["name"],
+            "status": item.get("status", "active"),
+        }
+        for item in institutions
+    ]
 
 
-@app.post("/auth/signup", status_code=201)
-def signup(payload: SignupRequest):
+def _public_user_with_institution(user: dict) -> dict:
+    payload = public_user(user)
+    institution = None
+    if user.get("institution_id"):
+        institution = institutions_collection.find_one({"_id": user["institution_id"]}, {"name": 1})
+    payload["institution_name"] = institution["name"] if institution else ""
+    return payload
+
+
+@app.post("/admin/institutions", status_code=201)
+def create_institution(
+    payload: InstitutionCreateRequest,
+    current_user: dict = Depends(require_roles("admin")),
+):
+    name = payload.name.strip()
+    document = {
+        "name": name,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+    }
+    try:
+        result = institutions_collection.insert_one(document)
+    except DuplicateKeyError as error:
+        raise HTTPException(status_code=409, detail="An institution with this name already exists.") from error
+    document["_id"] = result.inserted_id
+    return {
+        "id": str(document["_id"]),
+        "name": document["name"],
+        "status": document["status"],
+    }
+
+
+@app.get("/admin/users")
+def list_users(current_user: dict = Depends(require_roles("admin"))):
+    users = users_collection.find({"role": {"$ne": "admin"}}).sort("created_at", -1)
+    return [_public_user_with_institution(user) for user in users]
+
+
+@app.post("/admin/users", status_code=201)
+def create_user_account(
+    payload: SignupRequest,
+    current_user: dict = Depends(require_roles("admin")),
+):
     role = payload.role.strip().lower()
     if role not in {"staff", "dentist"}:
         raise HTTPException(status_code=400, detail="Only staff or dentist accounts can be created.")
@@ -88,30 +137,27 @@ def signup(payload: SignupRequest):
         raise HTTPException(status_code=400, detail="The institution does not exist or is inactive.")
 
     email = normalize_email(str(payload.email))
-    existing = users_collection.find_one({"email": email})
-    if existing:
-        raise HTTPException(
-            status_code=409,
-            detail="An account with this email already exists. Sign in, or use a different email for this role.",
-        )
+    if users_collection.find_one({"email": email}):
+        raise HTTPException(status_code=409, detail="An account with this email already exists.")
 
+    now = datetime.now(timezone.utc)
     user = {
         "full_name": payload.full_name.strip(),
         "email": email,
         "password_hash": password_hash.hash(payload.password),
         "role": role,
         "institution_id": institution_id,
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-        "updated_at": datetime.now(timezone.utc),
-        "validated_at": None,
-        "validated_by": None,
+        "status": "active",
+        "created_at": now,
+        "updated_at": now,
+        "validated_at": now,
+        "validated_by": current_user["_id"],
     }
     result = users_collection.insert_one(user)
     user["_id"] = result.inserted_id
     return {
-        "message": "Account created and waiting for administrator validation.",
-        "user": public_user(user),
+        "message": "Account created. The user can sign in immediately.",
+        "user": _public_user_with_institution(user),
     }
 
 

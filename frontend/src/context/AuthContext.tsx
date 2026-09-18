@@ -10,9 +10,7 @@ import {
 import {
   fetchCurrentUser,
   login as loginRequest,
-  signup as signupRequest,
   type AuthUser,
-  type SignupPayload,
 } from "../lib/authApi";
 
 const TOKEN_KEY = "dentalscreen_token";
@@ -23,7 +21,6 @@ type AuthContextValue = {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
-  signup: (payload: SignupPayload) => Promise<AuthUser>;
   logout: () => void;
 };
 
@@ -92,11 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   }, []);
 
-  const signup = useCallback(async (payload: SignupPayload) => {
-    const response = await signupRequest(payload);
-    return response.user;
-  }, []);
-
   const logout = useCallback(() => {
     clearSession();
     setToken(null);
@@ -104,8 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, token, isLoading, login, signup, logout }),
-    [user, token, isLoading, login, signup, logout],
+    () => ({ user, token, isLoading, login, logout }),
+    [user, token, isLoading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
