@@ -34,12 +34,7 @@ const RESULT_ASSETS = import.meta.glob("../assets/last*.jpeg", {
   query: "?url",
 }) as Record<string, string>;
 
-function createPatientCode() {
-  const random = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).toUpperCase().padStart(7, "0");
-  return `PT-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${random}`;
-}
-
-const EMPTY_FORM = (): PatientForm => ({ code: createPatientCode() });
+const EMPTY_FORM = (): PatientForm => ({ code: "" });
 
 type ScreeningStage = "form" | "analyzing" | "file";
 
@@ -55,7 +50,7 @@ export function NewScreening() {
   const [detectionSource, setDetectionSource] = useState<"live" | "demo" | null>(null);
   const [guardianConsentConfirmed, setGuardianConsentConfirmed] = useState(false);
 
-  const formValid = form.code.length > 0;
+  const formValid = form.code.trim().length >= 6;
 
   const capturedCount = ANGLES.filter((angle) => shots[angle.key]).length;
   const canSubmit = formValid && guardianConsentConfirmed && capturedCount > 0;
@@ -233,13 +228,13 @@ export function NewScreening() {
           <p className="screening-eyebrow">New screening</p>
           <h1>Create an anonymous screening record</h1>
           <p className="screening-sub">
-            A non-identifying patient code is generated automatically. Then capture or upload one
-            or more clear photos of the child's teeth.
+            Enter the patient's non-identifying code, then capture or upload one or more clear
+            photos of the child's teeth.
           </p>
 
           <div className="step-pills">
             <span className="step-pill step-pill-active">
-              <span className="step-pill-index">1</span> Anonymous code
+              <span className="step-pill-index">1</span> Enter patient code
             </span>
             <span className="step-pill">
               <span className="step-pill-index">2</span> Capture photos
@@ -260,9 +255,14 @@ export function NewScreening() {
                   type="text"
                   className="field-input"
                   value={form.code}
-                  readOnly
+                  onChange={(event) => setForm({ code: event.target.value })}
+                  placeholder="Enter the patient's anonymous code"
+                  minLength={6}
+                  maxLength={64}
+                  required
+                  autoComplete="off"
                 />
-                <small className="auth-field-hint">This code contains no name, age, or government/student identity information.</small>
+                <small className="auth-field-hint">Enter the code assigned to this patient. It must contain no name, age, or government/student identity information.</small>
               </label>
             </div>
           </section>
