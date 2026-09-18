@@ -249,6 +249,8 @@ def serialize_screening(record: dict) -> dict:
         "flaggedAreas": record.get("flagged_areas") or 0,
         "savedAt": _serialize_datetime(record.get("created_at")),
         "validatedAngles": record.get("validated_angles") or [],
+        "fileValidated": record.get("file_validated", False),
+        "validatedAt": _serialize_datetime(record.get("validated_at")) if record.get("validated_at") else None,
     }
 
 
@@ -386,6 +388,9 @@ async def create_screening(
         "result": result.strip(),
         "flagged_areas": flagged_areas,
         "validated_angles": [],
+        "file_validated": False,
+        "validated_at": None,
+        "validated_by": None,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
         "delete_after": datetime.now(timezone.utc) + timedelta(days=365),
@@ -435,6 +440,27 @@ def update_screening_validation(
         {
             "$set": {
                 "validated_angles": angles,
+                "updated_at": datetime.now(timezone.utc),
+            }
+        },
+    )
+    updated = patient_files_collection.find_one({"_id": record["_id"]})
+    return serialize_screening(updated)
+
+
+@app.patch("/screenings/{screening_id}/file-validation")
+def complete_file_validation(
+    screening_id: str,
+    current_user: dict = Depends(require_roles("dentist")),
+):
+    record = _require_institution_record(current_user, screening_id)
+    patient_files_collection.update_one(
+        {"_id": record["_id"]},
+        {
+            "$set": {
+                "file_validated": True,
+                "validated_at": datetime.now(timezone.utc),
+                "validated_by": current_user["_id"],
                 "updated_at": datetime.now(timezone.utc),
             }
         },

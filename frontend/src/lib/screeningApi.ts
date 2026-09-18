@@ -112,4 +112,10 @@ export async function deleteScreening(token: string, screeningId: string): Promi
   });
 }
 
+export async function completeFileValidation(token: string, screeningId: string): Promise<SavedScreening> {
+  return authorizedJson<SavedScreening>(`/screenings/${screeningId}/file-validation`, token, {
+    method: "PATCH",
+  });
+}
+
 export { ScreeningApiError };

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
     Activity,
     ArrowRight, ClipboardList,
+    BadgeCheck,
     CheckCircle2,
     FileText,
     Image as ImageIcon,
@@ -21,6 +22,7 @@ import { useLanguage } from "../context/LanguageContext";
 import {
     listScreenings,
     deleteScreening,
+    completeFileValidation,
     updateScreeningNotes,
     updateScreeningValidation,
 } from "../lib/screeningApi";
@@ -51,6 +53,8 @@ export function Dashboard() {
     const [validatedImages, setValidatedImages] = useState<Record<string, boolean>>({});
     const [deletePending, setDeletePending] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [validationPending, setValidationPending] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -140,6 +144,26 @@ export function Dashboard() {
         }
     }
 
+    async function handleCompleteValidation() {
+        if (!selectedRecord || !token || user?.role !== "dentist" || selectedRecord.fileValidated) return;
+
+        setValidationError(null);
+        setValidationPending(true);
+        try {
+            let record = selectedRecord;
+            if (draftNotes !== selectedRecord.notes) {
+                record = await updateScreeningNotes(token, selectedRecord.id, draftNotes);
+            }
+            const updatedRecord = await completeFileValidation(token, record.id);
+            setRecords((current) => current.map((item) => item.id === updatedRecord.id ? updatedRecord : item));
+            setNotesSaved(true);
+        } catch (error) {
+            setValidationError(error instanceof Error ? error.message : "Unable to validate this patient file.");
+        } finally {
+            setValidationPending(false);
+        }
+    }
+
     return (
         <div className="dashboard-page">
             <header className="dashboard-header">
@@ -194,6 +218,15 @@ export function Dashboard() {
                         <section className="dashboard-detail-panel">
                             <div className="dashboard-detail-head"><div><p className="dashboard-kicker">Patient file</p><h2>{selectedRecord.patient.code}</h2><span>Saved {formatDate(selectedRecord.savedAt, language)}</span></div><div className="dashboard-detail-actions"><span className="dashboard-review-badge">{selectedRecord.result}</span>{user?.role === "dentist" && <button type="button" className="dashboard-delete-button" onClick={() => void handleDelete()} disabled={deletePending}><Trash2 size={15} />{deletePending ? t("Deleting…") : t("Delete file")}</button>}</div></div>
                             {deleteError && <p className="dashboard-delete-error">{deleteError}</p>}
+                            <section className={`dashboard-validation-card ${selectedRecord.fileValidated ? "is-validated" : ""}`} aria-label="File validation">
+                                <div className="dashboard-validation-icon"><BadgeCheck size={21} /></div>
+                                <div className="dashboard-validation-copy">
+                                    <strong>{selectedRecord.fileValidated ? "File clinically validated" : "Ready for clinical validation"}</strong>
+                                    <span>{selectedRecord.fileValidated ? `Validated ${formatDate(selectedRecord.validatedAt ?? selectedRecord.savedAt, language)}` : "After reviewing the images and notes, confirm that this patient file is complete."}</span>
+                                </div>
+                                {user?.role === "dentist" && !selectedRecord.fileValidated && <button type="button" className="dashboard-validate-file-button" onClick={() => void handleCompleteValidation()} disabled={validationPending}><BadgeCheck size={16} />{validationPending ? "Validating…" : "Validate patient file"}</button>}
+                            </section>
+                            {validationError && <p className="dashboard-validation-error">{validationError}</p>}
                             <div className="dashboard-detail-fields"><div><small>Privacy</small><strong>Anonymous record</strong></div><div><small>Patient code</small><strong>{selectedRecord.patient.code}</strong></div></div>
                             <div className="dashboard-detail-section">
                                 <div className="dashboard-section-title"><ImageIcon size={16} /><h3>Images</h3><span>{selectedRecord.photos.length} · Click to inspect</span></div>

@@ -522,6 +522,16 @@
         grid-template-columns: repeat(2, 1fr);
     }
 
+    .dashboard-validation-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-validate-file-button {
+        width: 100%;
+        justify-content: center;
+    }
+
     .dashboard-new-button {
         padding: 9px 11px;
         font-size: .78rem;
@@ -807,6 +817,90 @@
     .image-review-visual img {
         max-height: 42vh;
     }
+}
+
+.dashboard-validation-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 14px;
+    border: 1px solid rgba(20, 98, 201, .17);
+    border-radius: 12px;
+    background: linear-gradient(100deg, #f1f7ff, #fff);
+}
+
+.dashboard-validation-card.is-validated {
+    border-color: rgba(23, 166, 114, .25);
+    background: linear-gradient(100deg, var(--clear-bg), #fff);
+}
+
+.dashboard-validation-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    place-items: center;
+    border-radius: 10px;
+    background: rgba(20, 98, 201, .11);
+    color: var(--blue);
+}
+
+.dashboard-validation-card.is-validated .dashboard-validation-icon {
+    background: rgba(23, 166, 114, .13);
+    color: var(--clear);
+}
+
+.dashboard-validation-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.dashboard-validation-copy strong,
+.dashboard-validation-copy span {
+    display: block;
+}
+
+.dashboard-validation-copy strong {
+    font-size: .84rem;
+}
+
+.dashboard-validation-copy span {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: .74rem;
+    line-height: 1.4;
+}
+
+.dashboard-validate-file-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--blue);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: .76rem;
+    font-weight: 700;
+    box-shadow: 0 8px 16px -12px var(--blue-dark);
+}
+
+.dashboard-validate-file-button:hover:not(:disabled) {
+    background: var(--blue-dark);
+}
+
+.dashboard-validate-file-button:disabled {
+    cursor: wait;
+    opacity: .7;
+}
+
+.dashboard-validation-error {
+    margin: 8px 0 -3px;
+    color: #b42318;
+    font-size: .78rem;
 }
 
 .dashboard-detail-actions {

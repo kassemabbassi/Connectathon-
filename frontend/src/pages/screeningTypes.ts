@@ -23,4 +23,6 @@ export type SavedScreening = {
     flaggedAreas: number;
     savedAt: string;
     validatedAngles?: string[];
+    fileValidated?: boolean;
+    validatedAt?: string | null;
 };
