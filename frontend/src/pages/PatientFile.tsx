@@ -48,6 +48,7 @@ export function PatientFile({
     onBack,
     onStartAnother,
 }: PatientFileProps) {
+    void detections;
     const { token } = useAuth();
     const [notes, setNotes] = useState("");
     const [saved, setSaved] = useState(false);

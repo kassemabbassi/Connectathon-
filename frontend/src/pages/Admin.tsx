@@ -51,11 +51,12 @@ export function Admin() {
 
   useEffect(() => {
     if (!token) return;
+    const authToken = token;
     let cancelled = false;
 
     async function load() {
       try {
-        await reload(token);
+        await reload(authToken);
         if (!cancelled) setLoadError(null);
       } catch {
         if (!cancelled) setLoadError("Unable to load institutions and accounts.");

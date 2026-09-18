@@ -13,6 +13,8 @@ import {
 import dentsXray from "../assets/dents.png";
 import "./Landing.css";
 import logo from "../assets/logo.png";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 const NAV_LINKS = [
   { href: "#how-it-works", label: "How it works" },
@@ -90,6 +92,7 @@ const DIFFERENT_POINTS = [
 
 export function Landing() {
   const [scrolled, setScrolled] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -102,7 +105,7 @@ export function Landing() {
     <div className="landing">
       <div className="topbar">
         <span className="topbar-item">
-          <MapPin size={14} /> Monastir, Tunisia
+          <MapPin size={14} /> {t("Monastir, Tunisia")}
         </span>
         <span className="topbar-item">
           <Mail size={14} /> contact@spotearly.tn
@@ -118,13 +121,14 @@ export function Landing() {
           <nav className="header-nav">
             {NAV_LINKS.map((link) => (
               <a key={link.href} href={link.href}>
-                {link.label}
+                {t(link.label)}
               </a>
             ))}
           </nav>
           <div className="header-actions">
+            <LanguageSwitcher />
             <Link to="/login" className="btn btn-primary">
-              Sign in
+              {t("Sign in")}
             </Link>
           </div>
         </div>
@@ -134,13 +138,13 @@ export function Landing() {
         <div className="hero-inner">
           <div className="hero-copy">
             <span className="eyebrow-pill reveal reveal-1">
-              <span className="eyebrow-dot" /> AI-assisted screening for Tunisian schools
+              <span className="eyebrow-dot" /> {t("AI-assisted screening for Tunisian schools")}
             </span>
             <h1 className="reveal reveal-2">
-              Catching tooth decay <br /> before it hurts.
+              {t("Catching tooth decay before it hurts.")}
             </h1>
             <p className="hero-lede reveal reveal-3">
-              A phone photo becomes a reviewed dental record.
+              {t("A phone photo becomes a reviewed dental record.")}
             </p>
             <p className="hero-sub reveal reveal-3">
               SpotEarly brings AI-assisted screening into Tunisian schools —
@@ -149,10 +153,10 @@ export function Landing() {
             </p>
             <div className="hero-actions reveal reveal-4">
               <Link to="/login" className="btn btn-primary">
-                Sign in
+                {t("Sign in")}
               </Link>
               <a href="#how-it-works" className="btn btn-outline">
-                See how it works
+                {t("See how it works")}
               </a>
             </div>
           </div>
@@ -171,7 +175,7 @@ export function Landing() {
           {STATS.map((s) => (
             <div key={s.label} className="stat">
               <p className="stat-value tabular-nums">{s.value}</p>
-              <p className="stat-label">{s.label}</p>
+              <p className="stat-label">{t(s.label)}</p>
               <p className="stat-source">{s.source}</p>
             </div>
           ))}
@@ -180,7 +184,7 @@ export function Landing() {
 
       <section id="how-it-works" className="section section-light">
         <div className="section-head">
-          <h2>From photo to follow-up</h2>
+          <h2>{t("From photo to follow-up")}</h2>
           <p className="section-sub">
             A simple, repeatable workflow that fits into a normal school day.
           </p>
@@ -197,8 +201,8 @@ export function Landing() {
                 <span className="step-index">{i + 1}</span>
                 <step.icon size={22} strokeWidth={1.75} />
               </span>
-              <h3>{step.title}</h3>
-              <p className="text-muted">{step.body}</p>
+              <h3>{t(step.title)}</h3>
+              <p className="text-muted">{t(step.body)}</p>
             </div>
           ))}
         </div>
@@ -206,18 +210,17 @@ export function Landing() {
 
       <section id="capabilities" className="section section-light section-alt">
         <div className="section-head">
-          <h2>AI-powered school screening</h2>
+          <h2>{t("AI-powered school screening")}</h2>
           <p className="section-sub">
-            Purpose-built for early detection, structured records, and real clinical
-            follow-up.
+            {t("Purpose-built for early detection, structured records, and real clinical follow-up.")}
           </p>
         </div>
         <div className="card-grid">
           {CAPABILITIES.map((cap) => (
             <div key={cap.title} className={`capability-card accent-${cap.accent}`}>
               <cap.icon size={26} strokeWidth={1.75} className="capability-icon" />
-              <h3>{cap.title}</h3>
-              <p className="text-muted">{cap.body}</p>
+              <h3>{t(cap.title)}</h3>
+              <p className="text-muted">{t(cap.body)}</p>
             </div>
           ))}
         </div>
@@ -225,17 +228,17 @@ export function Landing() {
 
       <section id="safety" className="section section-navy">
         <div className="section-head">
-          <h2 className="on-navy">The AI flags. Only a dentist decides.</h2>
+          <h2 className="on-navy">{t("The AI flags. Only a dentist decides.")}</h2>
           <p className="section-sub on-navy-muted">
-            Every screening reaches a family only after a licensed dentist reviews it.
+            {t("Every screening reaches a family only after a licensed dentist reviews it.")}
           </p>
         </div>
         <div className="card-grid card-grid-4">
           {DIFFERENT_POINTS.map((point) => (
             <div key={point.title} className="different-card">
               <point.icon size={20} strokeWidth={1.75} className="different-icon" />
-              <h3 className="on-navy">{point.title}</h3>
-              <p className="on-navy-muted">{point.body}</p>
+              <h3 className="on-navy">{t(point.title)}</h3>
+              <p className="on-navy-muted">{t(point.body)}</p>
             </div>
           ))}
         </div>

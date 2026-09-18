@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=Inter:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap");
 
 :root {
   /* navy scale (dark, "lightbox" sections) */
@@ -174,3 +174,7 @@ button {
     transition-duration: 0.001ms !important;
   }
 }
+
+html[dir="rtl"] body { font-family: "Tajawal", var(--font-ui); }
+html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3 { font-family: "Tajawal", var(--font-display); letter-spacing: 0; }
+html[dir="rtl"] input, html[dir="rtl"] textarea, html[dir="rtl"] select { text-align: right; }

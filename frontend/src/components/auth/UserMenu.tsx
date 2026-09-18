@@ -2,10 +2,12 @@ import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "./UserMenu.css";
+import { useLanguage } from "../../context/LanguageContext";
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   if (!user) return null;
 
@@ -21,7 +23,7 @@ export function UserMenu() {
         <span className="user-menu-role">{user.role}</span>
       </div>
       <button type="button" className="user-menu-logout" onClick={handleLogout}>
-        <LogOut size={15} /> Sign out
+        <LogOut size={15} /> {t("Sign out")}
       </button>
     </div>
   );

@@ -681,3 +681,10 @@
     padding: 6px 10px;
   }
 }
+
+html[dir="rtl"] .header-nav { flex-direction: row-reverse; }
+html[dir="rtl"] .process-step, html[dir="rtl"] .capability-card, html[dir="rtl"] .different-card { text-align: right; }
+html[dir="rtl"] .capability-card::before { left: auto; right: 0; }
+html[dir="rtl"] .different-card { border-left-width: 1px; border-right: 3px solid var(--cyan); }
+html[dir="rtl"] .stat { border-left: 0; border-right: 1px solid rgba(255, 255, 255, 0.1); }
+html[dir="rtl"] .stat:first-child { border-right: 0; }

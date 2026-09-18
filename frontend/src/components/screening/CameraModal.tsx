@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Camera, SwitchCamera, X } from "lucide-react";
 import "./CameraModal.css";
+import { useLanguage } from "../../context/LanguageContext";
 
 type FacingMode = "environment" | "user";
 
@@ -11,6 +12,7 @@ type CameraModalProps = {
 };
 
 export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -32,7 +34,7 @@ export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
       stopStream();
 
       if (!navigator.mediaDevices?.getUserMedia) {
-        setError("This browser doesn't support camera capture. Use upload instead.");
+        setError(t("This browser doesn't support camera capture. Use upload instead."));
         return;
       }
 
@@ -53,7 +55,7 @@ export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
         setReady(true);
       } catch {
         if (!cancelled) {
-          setError("Camera access was blocked or unavailable. Allow camera access or use upload instead.");
+          setError(t("Camera access was blocked or unavailable. Allow camera access or use upload instead."));
         }
       }
     }
@@ -92,7 +94,7 @@ export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
       <div className="camera-modal">
         <div className="camera-modal-head">
           <p className="camera-modal-title">{title}</p>
-          <button type="button" className="camera-modal-close" onClick={onClose} aria-label="Close camera">
+          <button type="button" className="camera-modal-close" onClick={onClose} aria-label={t("Close camera")}>
             <X size={18} />
           </button>
         </div>
@@ -118,7 +120,7 @@ export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
             onClick={() => setFacingMode((mode) => (mode === "environment" ? "user" : "environment"))}
             disabled={!!error}
           >
-            <SwitchCamera size={16} /> Switch camera
+            <SwitchCamera size={16} /> {t("Switch camera")}
           </button>
           <button
             type="button"
@@ -126,7 +128,7 @@ export function CameraModal({ title, onCapture, onClose }: CameraModalProps) {
             onClick={handleCapture}
             disabled={!ready}
           >
-            <Camera size={16} /> Capture
+            <Camera size={16} /> {t("Capture")}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import "./PriorityBadge.css";
+import { useLanguage } from "../../context/LanguageContext";
 
 type Priority = "clear" | "watch" | "urgent";
 
@@ -9,5 +10,6 @@ const LABELS: Record<Priority, string> = {
 };
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
-  return <span className={`priority-badge priority-${priority}`}>{LABELS[priority]}</span>;
+  const { t } = useLanguage();
+  return <span className={`priority-badge priority-${priority}`}>{t(LABELS[priority])}</span>;
 }

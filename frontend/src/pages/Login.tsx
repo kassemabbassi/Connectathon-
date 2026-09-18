@@ -5,6 +5,8 @@ import { AuthApiError } from "../lib/authApi";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
 import "./Auth.css";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { useLanguage } from "../context/LanguageContext";
 
 function homeRouteForRole(role: string) {
   if (role === "admin") return "/admin";
@@ -13,6 +15,7 @@ function homeRouteForRole(role: string) {
 }
 
 export function Login() {
+  const { t } = useLanguage();
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,22 +60,22 @@ export function Login() {
             <span>SpotEarly</span>
           </Link>
 
-          <Link to="/" className="auth-back" style={{ marginBottom: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}><LanguageSwitcher /><Link to="/" className="auth-back" style={{ marginBottom: 0 }}>
             <ArrowLeft size={16} />
-            Back to home
-          </Link>
+            {t("Back to home")}
+          </Link></div>
         </div>
 
-        <h1>Sign in</h1>
+        <h1>{t("Sign in")}</h1>
         <p className="auth-lede">
-          Staff and dentists sign in with the account created for their school. Administrators sign in to manage institutions and users.
+          {t("Staff and dentists sign in with the account created for their school. Administrators sign in to manage institutions and users.")}
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && <p className="auth-error">{error}</p>}
 
           <label className="auth-field">
-            <span>Email</span>
+            <span>{t("Email")}</span>
             <input
               type="email"
               autoComplete="email"
@@ -84,7 +87,7 @@ export function Login() {
           </label>
 
           <label className="auth-field">
-            <span>Password</span>
+            <span>{t("Password")}</span>
             <input
               type="password"
               autoComplete="current-password"
@@ -92,7 +95,7 @@ export function Login() {
               minLength={8}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Your password"
+              placeholder={t("Your password")}
             />
           </label>
 

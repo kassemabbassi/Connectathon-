@@ -2,6 +2,7 @@ import { useRef } from "react";
 import type { ChangeEvent } from "react";
 import { Camera, RotateCcw, Upload, X } from "lucide-react";
 import "./CaptureSlot.css";
+import { useLanguage } from "../../context/LanguageContext";
 
 type CaptureSlotProps = {
   label: string;
@@ -22,6 +23,7 @@ export function CaptureSlot({
   onUpload,
   onRemove,
 }: CaptureSlotProps) {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -35,9 +37,9 @@ export function CaptureSlot({
       <div className="capture-slot-head">
         <p className="capture-slot-label">{label}</p>
         {required ? (
-          <span className="capture-slot-required">Required</span>
+          <span className="capture-slot-required">{t("Required")}</span>
         ) : (
-          <span className="capture-slot-optional">Optional</span>
+          <span className="capture-slot-optional">{t("Optional")}</span>
         )}
       </div>
 
@@ -53,7 +55,7 @@ export function CaptureSlot({
             <X size={14} />
           </button>
           <button type="button" className="capture-slot-retake" onClick={onOpenCamera}>
-            <RotateCcw size={14} /> Retake
+            <RotateCcw size={14} /> {t("Retake")}
           </button>
         </div>
       ) : (
@@ -61,14 +63,14 @@ export function CaptureSlot({
           <p className="capture-slot-hint">{hint}</p>
           <div className="capture-slot-actions">
             <button type="button" className="capture-slot-btn" onClick={onOpenCamera}>
-              <Camera size={16} /> Capture
+              <Camera size={16} /> {t("Capture")}
             </button>
             <button
               type="button"
               className="capture-slot-btn"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload size={16} /> Upload
+              <Upload size={16} /> {t("Upload")}
             </button>
           </div>
           <input
